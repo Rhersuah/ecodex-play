@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Rejected Accounts</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:70px 20px 40px;}
+  .wrap{max-width:640px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .row{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:16px;margin-bottom:12px;}
+  .name{font-size:14px;font-weight:700;}
+  .meta{font-size:12px;color:var(--text-muted);margin-top:4px;}
+  .reason{background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:11px; padding:8px 10px; border-radius:8px; margin-top:8px;}
+  .btn{padding:9px 14px;border:none;border-radius:8px;background:#ef4444;color:#fff;font-weight:700;font-size:12px;cursor:pointer;margin-top:10px;}
+  .empty{color:var(--text-muted);font-size:13px;font-style:italic;padding:30px;text-align:center;}
+</style>
+</head>
+<body>
+<a href="settings.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Settings">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1><i class="fa-solid fa-user-slash"></i> Rejected Accounts</h1>
+    <p class="sub">Signups that were rejected by staff — including ones flagged for a possible duplicate account. These never count toward your registered player numbers. You can permanently delete any of them here.</p>
+    <div id="list"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    async function loadRejected() {
+        const list = document.getElementById('list');
+        try {
+            const { accounts } = await api.get('/superadmin/rejected-accounts');
+            list.innerHTML = accounts.length ? accounts.map(u => `
+                <div class="row">
+                    <div class="name">${escapeHtml(u.full_name)} <span style="color:var(--text-muted); font-weight:400;">@${escapeHtml(u.username)}</span></div>
+                    <div class="meta"><i class="fa-solid fa-envelope"></i> ${escapeHtml(u.email)} &nbsp; <i class="fa-solid fa-phone"></i> ${escapeHtml(u.mobile || 'N/A')}</div>
+                    <div class="meta">Rejected: ${new Date(u.updated_at).toLocaleString()}</div>
+                    ${u.rejection_reason ? `<div class="reason"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(u.rejection_reason)}</div>` : ''}
+                    ${u.id_photo ? `<a href="${u.id_photo}" target="_blank" style="display:inline-block; font-size:12px; color:#3b82f6; margin-top:8px;"><i class="fa-solid fa-id-card"></i> View uploaded ID &rarr;</a>` : ''}
+                    <div><button class="btn" onclick="deleteRejected(${u.id})"><i class="fa-solid fa-trash"></i> Delete Permanently</button></div>
+                </div>
+            `).join('') : `<div class="empty">No rejected accounts.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function deleteRejected(id) {
+        if (!(await appConfirm('Permanently delete this rejected account and all its data? This cannot be undone.', 'Delete Permanently'))) return;
+        try {
+            await api.del(`/superadmin/rejected-accounts/${id}`);
+            showToast('Account deleted.', 'success');
+            loadRejected();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', loadRejected);
+</script>
+</body>
+</html>

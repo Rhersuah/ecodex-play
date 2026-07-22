@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | OTP Management</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:720px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;line-height:1.5;}
+  .row{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+  .row .name{font-weight:700;font-size:14px;}
+  .row .meta{font-size:12px;color:var(--text-muted);margin-top:3px;}
+  .btn{background:var(--accent-green);border:none;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;}
+  .empty{color:var(--text-muted);font-size:13px;font-style:italic;padding:30px;text-align:center;background:var(--bg-card);border:1px dashed var(--border-color);border-radius:16px;}
+  .code-box{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:14px;margin-top:10px;font-family:monospace;font-size:20px;font-weight:800;text-align:center;color:var(--accent-green);letter-spacing:4px;}
+</style>
+</head>
+<body>
+<a href="super_admin.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>OTP Management</h1>
+    <p class="sub">Generate a 6-digit verification code for a pending withdrawal. The code is sent directly to the user's Support Messages. Once they submit it correctly, the withdrawal becomes eligible for final approval.</p>
+
+    <div id="withdrawalsList"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    async function loadWithdrawals() {
+        const list = document.getElementById('withdrawalsList');
+        try {
+            const { withdrawals } = await api.get('/superadmin/otp/pending-withdrawals');
+            list.innerHTML = withdrawals.length ? withdrawals.map(w => `
+                <div class="row">
+                    <div>
+                        <div class="name">${escapeHtml(w.full_name)} <span style="color:var(--text-muted); font-weight:400;">@${escapeHtml(w.username)}</span></div>
+                        <div class="meta">₱${parseFloat(w.amount).toFixed(2)} via ${escapeHtml(w.gateway)} — Ref: ${w.id.slice(0,8)}</div>
+                        <div id="codeBox-${w.id}"></div>
+                    </div>
+                    <button class="btn" onclick="generateOtp('${w.id}', ${w.user_id})"><i class="fa-solid fa-key"></i> Generate OTP</button>
+                </div>
+            `).join('') : `<div class="empty">No withdrawals currently need OTP verification.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function generateOtp(withdrawalId, userId) {
+        try {
+            const data = await api.post('/superadmin/otp/generate', {
+                userId, relatedType: 'withdrawal', relatedId: withdrawalId,
+            });
+            document.getElementById(`codeBox-${withdrawalId}`).innerHTML = `<div class="code-box">${data.code}</div>`;
+            showToast('OTP sent to user via Support Messages!', 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', loadWithdrawals);
+</script>
+</body>
+</html>

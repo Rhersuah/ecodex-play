@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Live Draw Monitor</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;--accent-red:#ef4444;--pool-glow:#14b8a6;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 16px 40px;}
+  .wrap{max-width:720px; margin:0 auto;}
+  .top-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+  .status-pill{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; padding:5px 12px; border-radius:8px;}
+  .status-online{background:rgba(16,185,129,0.15); color:var(--accent-green);}
+  .status-offline{background:rgba(148,163,184,0.15); color:#94a3b8;}
+  .engine-name{font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;}
+
+  .pool-outer{width:380px; height:380px; margin:0 auto 24px; border-radius:50%; position:relative; display:flex; align-items:center; justify-content:center;}
+  .wheel-spinner{position:absolute; inset:0; border-radius:50%;
+    border:6px solid #0b0f17; box-shadow:0 0 0 2px rgba(20,184,166,0.3), 0 0 30px rgba(20,184,166,0.15); transition:box-shadow .3s;}
+  .wheel-spinner::before{content:''; position:absolute; inset:-9px; border-radius:50%; border:2px dashed rgba(20,184,166,0.45); pointer-events:none;}
+  .pool-outer.spinning .wheel-spinner{animation:pool-spin 14s linear infinite;}
+  .pool-outer.spinning.has-entries .wheel-spinner{animation:pool-spin 5s linear infinite;}
+  .pool-outer.drawing .wheel-spinner{animation:pool-draw 5s cubic-bezier(0.16, 1, 0.3, 1) forwards;}
+  .pool-outer.spinning .wheel-spinner{box-shadow:0 0 0 2px rgba(20,184,166,0.5), 0 0 40px rgba(20,184,166,0.3);}
+  .pool-outer.drawing .wheel-spinner{box-shadow:0 0 0 3px rgba(20,184,166,0.6), 0 0 60px rgba(20,184,166,0.45);}
+  .wheel-label{position:absolute; inset:0; pointer-events:none;}
+  .wheel-label span{position:absolute; top:50%; left:50%; font-size:8px; font-weight:800; color:rgba(255,255,255,0.85); text-shadow:0 1px 3px rgba(0,0,0,0.6); letter-spacing:0.5px; transform-origin:0 0; white-space:nowrap;}
+  .pool-hub{position:relative; z-index:2; width:110px; height:110px; border-radius:50%; background:#0b0f17; border:3px solid #14b8a6; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(20,184,166,0.4);}
+  @keyframes pool-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+  @keyframes pool-draw{from{transform:rotate(0deg);}to{transform:rotate(1080deg);}}
+  .pool-pointer{position:absolute; top:-6px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:16px solid transparent; border-right:16px solid transparent; border-top:26px solid #ef4444; filter:drop-shadow(0 0 6px rgba(239,68,68,0.6)); z-index:10;}
+  .pool-text{color:#64748b; font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; text-align:center; padding:0 8px; line-height:1.4;}
+  .pool-count{font-size:26px; font-weight:800; color:var(--pool-glow);}
+  .pool-count-label{font-size:8px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-top:2px;}
+
+  .card{background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px; padding:26px; text-align:center; max-width:420px; margin:0 auto;}
+  #cardBody{display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .draw-name{font-size:16px; font-weight:700; margin-bottom:4px;}
+  .draw-sub{color:var(--text-muted); font-size:13px; margin-bottom:20px;}
+  .countdown-grid{display:flex; gap:6px; justify-content:center; margin-bottom:20px; flex-wrap:wrap;}
+  .countdown-box{background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:8px 10px; min-width:46px;}
+  .countdown-box .num{font-size:16px; font-weight:800; color:var(--accent-green);}
+  .countdown-box .label{font-size:8px; color:var(--text-muted); text-transform:uppercase; margin-top:2px;}
+  .btn{display:inline-block; padding:12px 22px; background:var(--accent-green); color:#fff; border-radius:12px; text-decoration:none; font-weight:600; font-size:13px; border:none; cursor:pointer;}
+  .offline-icon{font-size:44px; color:#475569; margin-bottom:14px;}
+
+  .winners-panel{margin-top:20px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:16px; padding:18px;}
+  .winners-panel h3{font-size:13px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin-bottom:14px;}
+  .winner-row{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border-color); opacity:0; animation:winner-in .4s ease forwards;}
+  .winner-row:last-child{border-bottom:none;}
+  @keyframes winner-in{from{opacity:0; transform:translateY(6px);}to{opacity:1; transform:translateY(0);}}
+  .medal{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0;}
+  .medal-gold{background:linear-gradient(135deg,#facc15,#ca8a04); color:#3f2d00;}
+  .medal-silver{background:linear-gradient(135deg,#e2e8f0,#94a3b8); color:#1e293b;}
+  .medal-bronze{background:linear-gradient(135deg,#f97316,#9a3412); color:#fff;}
+  .medal-normal{background:#1e293b; color:#64748b;}
+  .winner-ticket{font-family:monospace; font-weight:700; font-size:13px;}
+  .winner-owner{font-size:11px; color:var(--text-muted); margin-top:2px;}
+  .congrats-banner{background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(20,184,166,0.1)); border:1px solid rgba(16,185,129,0.3); border-radius:14px; padding:16px; margin-bottom:16px; text-align:center;}
+  .congrats-banner i{font-size:26px; color:#facc15; margin-bottom:6px;}
+
+  @media (max-width:480px){ .pool-outer{width:300px; height:300px;} .pool-hub{width:90px; height:90px;} .pool-count{font-size:20px;} }
+</style>
+</head>
+<body>
+<a href="javascript:history.back()" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = ["admin", "super_admin"];</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<audio id="bgAudio" loop style="display:none;"></audio>
+
+<div class="wrap">
+    <div class="top-row">
+        <span class="engine-name" id="engineLabel"></span>
+        <span class="status-pill status-offline" id="statusPill">OFFLINE</span>
+    </div>
+
+    <div class="pool-outer" id="poolOuter" style="display:none;">
+        <div class="pool-pointer"></div>
+        <div class="wheel-spinner">
+            <div class="wheel-label" id="wheelLabels"></div>
+        </div>
+        <div class="pool-hub">
+            <div id="poolInner" class="pool-text"></div>
+        </div>
+    </div>
+
+    <div id="winnerListBox" style="display:none; max-width:420px; margin:0 auto 20px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:14px;">
+        <div style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;"><i class="fa-solid fa-trophy" style="color:#f59e0b;"></i> Winner List</div>
+        <div id="winnerListItems" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+    </div>
+
+    <div class="card" id="drawCard">
+        <h1 class="draw-name" id="cardTitle">Loading...</h1>
+        <p class="draw-sub" id="cardSub"></p>
+        <div id="cardBody"></div>
+    </div>
+
+    <div class="winners-panel" id="winnersPanel" style="display:none;">
+        <div id="congratsBanner"></div>
+        <h3><i class="fa-solid fa-trophy"></i> Winners</h3>
+        <div id="winnersList"></div>
+    </div>
+</div>
+
+<script>
+    const ENGINE_LABELS = { wheel: 'Wheel of Fortune', tambiolo: 'Tambiolo Sphere', dice: 'Cyber Dice Grid', cards: 'Laser Card Deck' };
+    let countdownInterval = null;
+    let tickerInterval = null;
+    let tickerIndex = 0;
+    let lastKnownDrawStatus = null;
+    let isDrawing = false;
+    let forceClosedDrawId = null; // once a draw force-closes, ignore further "online" reports for it
+
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    const WHEEL_COLORS = ['#1e3a5f', '#4b5563', '#5b21b6', '#0f172a', '#164e3a', '#7c2d12', '#b45309', '#164e63'];
+
+    function renderWheelLabels(ticketNumbers) {
+        const wheel = document.querySelector('.wheel-spinner');
+        const container = document.getElementById('wheelLabels');
+        if (!ticketNumbers || ticketNumbers.length === 0) {
+            container.innerHTML = '';
+            wheel.style.background = '';
+            return;
+        }
+        // The wheel always has exactly as many slices as there are tickets
+        // in the pool right now — it grows as more get dropped, instead of
+        // staying stuck at a fixed number of slots.
+        const count = ticketNumbers.length;
+        const sliceDeg = 360 / count;
+        const stops = ticketNumbers.map((_, i) => {
+            const color = WHEEL_COLORS[i % WHEEL_COLORS.length];
+            return `${color} ${(i * sliceDeg).toFixed(2)}deg ${((i + 1) * sliceDeg).toFixed(2)}deg`;
+        }).join(', ');
+        wheel.style.background = `conic-gradient(${stops})`;
+
+        // Dynamic radius based on the wheel's ACTUAL rendered size — the
+        // wheel is smaller on mobile (300px vs 380px desktop), so a fixed
+        // radius tuned for desktop would push labels past the mobile
+        // wheel's edge. This keeps labels comfortably inside every screen size.
+        const wheelSize = document.getElementById('poolOuter').offsetWidth || 380;
+        const radius = wheelSize * 0.335;
+        container.innerHTML = ticketNumbers.map((code, i) => {
+            const angle = i * sliceDeg + sliceDeg / 2; // center of each slice
+            // conic-gradient's 0deg is "up" (12 o'clock); CSS rotate()'s 0deg
+            // reference is "right" — offset by -90deg so labels land in the
+            // correct slice, then translate outward. No extra rotation after
+            // that: the text naturally reads radially, tilted to match its
+            // slice's angle, the same way the reference wheel design does.
+            const cssAngle = angle - 90;
+            return `<span style="transform: rotate(${cssAngle}deg) translate(${radius}px);">${escapeHtml(code)}</span>`;
+        }).join('');
+    }
+
+    function startTicketTicker(ticketNumbers) {
+        if (!ticketNumbers || ticketNumbers.length === 0) { stopTicketTicker(); return; }
+        renderWheelLabels(ticketNumbers);
+        const inner = document.getElementById('poolInner');
+        const showNext = () => {
+            const code = ticketNumbers[tickerIndex % ticketNumbers.length];
+            inner.innerHTML = `<div class="pool-count" style="font-size:13px; font-family:monospace;">${escapeHtml(code)}</div><div class="pool-count-label">${ticketNumbers.length} Ticket${ticketNumbers.length > 1 ? 's' : ''}</div>`;
+            tickerIndex++;
+        };
+        showNext();
+        if (tickerInterval) clearInterval(tickerInterval);
+        tickerInterval = setInterval(showNext, 900);
+    }
+
+    function stopTicketTicker() {
+        if (tickerInterval) { clearInterval(tickerInterval); tickerInterval = null; }
+        tickerIndex = 0;
+        const container = document.getElementById('wheelLabels');
+        if (container) container.innerHTML = '';
+        const wheel = document.querySelector('.wheel-spinner');
+        if (wheel) wheel.style.background = '';
+    }
+
+    function medalClass(rank) {
+        if (rank === 1) return 'medal-gold';
+        if (rank === 2) return 'medal-silver';
+        if (rank === 3) return 'medal-bronze';
+        return 'medal-normal';
+    }
+    function medalLabel(rank) {
+        if (rank === 1) return '🥇';
+        if (rank === 2) return '🥈';
+        if (rank === 3) return '🥉';
+        return rank;
+    }
+
+    function renderOffline() {
+        document.getElementById('poolOuter').style.display = 'none';
+        document.getElementById('engineLabel').textContent = '';
+        document.getElementById('statusPill').className = 'status-pill status-offline';
+        document.getElementById('statusPill').textContent = 'OFFLINE';
+        document.getElementById('cardTitle').textContent = 'No Current Draw';
+        document.getElementById('cardSub').textContent = 'There is no scheduled draw right now. Please check back later.';
+        document.getElementById('cardBody').innerHTML = `<i class="fa-solid fa-satellite-dish offline-icon"></i>`;
+        document.getElementById('winnersPanel').style.display = 'none';
+        document.getElementById('winnerListBox').style.display = 'none';
+        if (countdownInterval) clearInterval(countdownInterval);
+        stopTicketTicker();
+    }
+
+    function renderCountdown(targetDatetime, drawName) {
+        document.getElementById('cardTitle').textContent = drawName || 'Upcoming Draw';
+        document.getElementById('cardSub').textContent = 'Drop your ticket into the pool before time runs out.';
+        document.getElementById('cardBody').innerHTML = `
+            <div class="countdown-grid">
+                <div class="countdown-box"><div class="num" id="cdDays">00</div><div class="label">Days</div></div>
+                <div class="countdown-box"><div class="num" id="cdHours">00</div><div class="label">Hours</div></div>
+                <div class="countdown-box"><div class="num" id="cdMinutes">00</div><div class="label">Minutes</div></div>
+                <div class="countdown-box"><div class="num" id="cdSeconds">00</div><div class="label">Seconds</div></div>
+            </div>
+            <span style="color:#64748b; font-size:12px;">Monitoring live — this updates automatically.</span>
+        `;
+        document.getElementById('winnersPanel').style.display = 'none';
+
+        if (countdownInterval) clearInterval(countdownInterval);
+        const target = new Date(targetDatetime).getTime();
+
+        function tick() {
+            const diff = target - Date.now();
+            if (diff <= 0) {
+                clearInterval(countdownInterval);
+                document.getElementById('cardTitle').textContent = 'Draw Starting Soon';
+                document.getElementById('cardSub').textContent = 'Waiting for the System Administrator to start the draw...';
+                document.getElementById('cardBody').innerHTML = '';
+                return;
+            }
+            const days = Math.floor(diff / 86400000);
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            document.getElementById('cdDays').textContent = String(days).padStart(2, '0');
+            document.getElementById('cdHours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('cdMinutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('cdSeconds').textContent = String(seconds).padStart(2, '0');
+        }
+        tick();
+        countdownInterval = setInterval(tick, 1000);
+    }
+
+    let wheelCumulativeRotation = 0; // keeps increasing so the wheel never visually "snaps back"
+
+    // Spins the wheel so it lands EXACTLY on the given ticket's slice, under
+    // the pointer at the top — a real spin-decelerate-land motion, not a
+    // generic animation. Returns a Promise that resolves once it's landed.
+    function spinWheelTo(ticketNumbers, targetTicket) {
+        return new Promise(resolve => {
+            const wheel = document.querySelector('.wheel-spinner');
+            const count = ticketNumbers.length;
+            const sliceDeg = 360 / count;
+            const targetIndex = ticketNumbers.indexOf(targetTicket);
+            const idx = targetIndex === -1 ? 0 : targetIndex;
+            const sliceCenterAngle = idx * sliceDeg + sliceDeg / 2;
+
+            // To bring this slice under the top pointer, rotate so that
+            // (currentRotation + delta) mod 360 == -sliceCenterAngle (mod 360).
+            // Add several full spins on top for a satisfying visual effect.
+            const extraSpins = 5 + Math.floor(Math.random() * 2); // 5-6 full turns
+            const currentMod = wheelCumulativeRotation % 360;
+            let delta = (360 - sliceCenterAngle - currentMod + 360) % 360;
+            wheelCumulativeRotation += extraSpins * 360 + delta;
+
+            wheel.style.transition = 'transform 3.2s cubic-bezier(0.12, 0.65, 0.15, 1)';
+            wheel.style.transform = `rotate(${wheelCumulativeRotation}deg)`;
+            setTimeout(resolve, 3200);
+        });
+    }
+
+    async function playSequentialReveal(draw) {
+        isDrawing = true;
+        const poolOuter = document.getElementById('poolOuter');
+        stopTicketTicker();
+        document.getElementById('cardTitle').textContent = 'Selecting Winners...';
+        document.getElementById('cardSub').textContent = 'Please wait.';
+        document.getElementById('cardBody').innerHTML = '';
+
+        let winners = [];
+        try {
+            const res = await api.get(`/shared/draws/${draw.id}/winners`);
+            winners = res.winners;
+        } catch (e) { /* ignore */ }
+
+        const panel = document.getElementById('winnersPanel');
+        const list = document.getElementById('winnersList');
+        panel.style.display = 'block';
+        list.innerHTML = '';
+        document.getElementById('congratsBanner').innerHTML = '';
+
+        // Keep the wheel visible with whatever tickets are still "in play" —
+        // each winner picked shrinks the wheel by one slice, so it never
+        // jumps straight from full to empty.
+        let remainingLabels = Array.from(document.querySelectorAll('#wheelLabels span')).map(el => el.textContent);
+
+        for (const w of winners) {
+            poolOuter.classList.remove('spinning');
+            document.getElementById('poolInner').innerHTML = `<div style="font-size:10px; font-weight:700;">SPINNING...</div>`;
+            await spinWheelTo(remainingLabels, w.ticket_number);
+
+            // Briefly show what landed under the pointer before it's added
+            // to the winner list — a beat of "yes, this is the one," not
+            // an instant jump straight to the next spin.
+            document.getElementById('poolInner').innerHTML = `<div class="pool-count" style="font-size:12px; font-family:monospace;">${escapeHtml(w.ticket_number)}</div>`;
+            await new Promise(r => setTimeout(r, 900));
+
+            // Remove this winner's ticket from the wheel display — the pool
+            // visually shrinks one slice at a time instead of vanishing all at once.
+            const idx = remainingLabels.indexOf(w.ticket_number);
+            if (idx !== -1) remainingLabels.splice(idx, 1);
+            renderWheelLabels(remainingLabels);
+
+            const row = document.createElement('div');
+            row.className = 'winner-row';
+            row.innerHTML = `
+                <div class="medal ${medalClass(w.rank)}">${medalLabel(w.rank)}</div>
+                <div>
+                    <div class="winner-ticket">#${escapeHtml(w.ticket_number)}</div>
+                    <div class="winner-owner">${w.owner_masked ? escapeHtml(w.owner_masked) : ''}</div>
+                </div>
+            `;
+            list.appendChild(row);
+
+            // Realistic pacing between picks — a short pause after each
+            // winner lands before the wheel spins again for the next one.
+            await new Promise(r => setTimeout(r, 2500));
+        }
+
+        document.getElementById('cardTitle').textContent = 'Draw Completed!';
+        document.getElementById('cardSub').textContent = new Date(draw.draw_date).toLocaleString();
+        document.getElementById('cardBody').innerHTML = `<a href="tickets_generator.html" class="btn">Manage Tickets</a>`;
+        document.getElementById('congratsBanner').innerHTML = `
+            <div class="congrats-banner">
+                <i class="fa-solid fa-champagne-glasses"></i>
+                <div style="font-weight:700; font-size:14px;">Congratulations to our winners!</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Thank you to everyone who joined this draw.</div>
+            </div>
+        `;
+
+        // A brief center-screen "Draw Completed" popup, then automatically
+        // clear it — this doesn't stay up forever, it's just a moment of confirmation.
+        showDrawCompletedPopup();
+
+        isDrawing = false;
+
+        // Realistic pacing: don't just sit on the results forever — the
+        // engine force-closes itself 10 seconds after the winners are
+        // announced, and stays closed (won't flip back "online" on a later
+        // poll just because the backend still briefly reports this draw as
+        // completed).
+        setTimeout(() => {
+            stopTicketTicker();
+            forceClosedDrawId = draw.id;
+            renderOffline();
+        }, 10000);
+    }
+
+    function showDrawCompletedPopup() {
+        const overlay = document.createElement('div');
+        overlay.id = 'drawCompletedPopup';
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:6000; display:flex; align-items:center; justify-content:center; padding:20px;';
+        overlay.innerHTML = `
+            <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px; padding:34px; text-align:center; max-width:280px;">
+                <i class="fa-solid fa-circle-check" style="font-size:44px; color:var(--accent-green);"></i>
+                <div style="font-size:18px; font-weight:800; margin-top:14px;">Draw Completed</div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.remove(), 2000);
+    }
+
+    async function renderAlreadyCompleted(draw) {
+        document.getElementById('cardTitle').textContent = 'Draw Completed!';
+        document.getElementById('cardSub').textContent = new Date(draw.draw_date).toLocaleString();
+        document.getElementById('cardBody').innerHTML = `<a href="tickets_generator.html" class="btn">Manage Tickets</a>`;
+        const panel = document.getElementById('winnersPanel');
+        try {
+            const { winners } = await api.get(`/shared/draws/${draw.id}/winners`);
+            document.getElementById('congratsBanner').innerHTML = '';
+            if (winners.length) {
+                panel.style.display = 'block';
+                document.getElementById('winnersList').innerHTML = winners.map(w => `
+                    <div class="winner-row" style="opacity:1;">
+                        <div class="medal ${medalClass(w.rank)}">${medalLabel(w.rank)}</div>
+                        <div>
+                            <div class="winner-ticket">#${escapeHtml(w.ticket_number)}</div>
+                            <div class="winner-owner">${w.owner_masked ? escapeHtml(w.owner_masked) : ''}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } else { panel.style.display = 'none'; }
+        } catch (e) { panel.style.display = 'none'; }
+    }
+
+    async function loadWinnerList(drawId) {
+        try {
+            const { winners } = await api.get(`/shared/draws/${drawId}/winners`);
+            const box = document.getElementById('winnerListBox');
+            const list = document.getElementById('winnerListItems');
+            if (!winners.length) { box.style.display = 'none'; return; }
+            box.style.display = 'block';
+            list.innerHTML = winners.map(w => {
+                const medal = w.rank === 1 ? '🥇' : w.rank === 2 ? '🥈' : w.rank === 3 ? '🥉' : `#${w.rank}`;
+                return `<span style="font-size:10px; background:#0b0f17; border:1px solid var(--border-color); border-radius:8px; padding:4px 8px; white-space:nowrap;">${medal} ${escapeHtml(w.owner_masked || 'Unknown')} — ${escapeHtml(w.ticket_number)}</span>`;
+            }).join('');
+        } catch (e) { /* non-fatal */ }
+    }
+
+    async function refresh() {
+        if (isDrawing) return;
+        try {
+            const data = await api.get('/shared/draw-pool-status');
+            const poolOuter = document.getElementById('poolOuter');
+            const pill = document.getElementById('statusPill');
+
+            if (!data.isOnline) {
+                renderOffline();
+                lastKnownDrawStatus = null;
+                setBackgroundAudioPlaying(false);
+                return;
+            }
+
+            document.getElementById('engineLabel').textContent = ENGINE_LABELS[data.settings.active_engine] || 'Wheel of Fortune';
+            pill.className = 'status-pill status-online';
+            pill.textContent = 'ONLINE';
+            setBackgroundAudioPlaying(true);
+            poolOuter.style.display = 'flex';
+            poolOuter.classList.add('spinning');
+            poolOuter.classList.toggle('has-entries', data.poolCount > 0);
+
+            const inner = document.getElementById('poolInner');
+            if (data.draw && data.draw.status === 'completed') {
+                if (data.draw.id === forceClosedDrawId) {
+                    // Already force-closed this exact draw — stay offline
+                    // even though the backend briefly still reports it as
+                    // completed within its short visibility window.
+                    renderOffline();
+                    return;
+                }
+                stopTicketTicker();
+                loadWinnerList(data.draw.id);
+                if (lastKnownDrawStatus !== 'completed') {
+                    lastKnownDrawStatus = 'completed';
+                    await playSequentialReveal(data.draw);
+                } else {
+                    await renderAlreadyCompleted(data.draw);
+                }
+                return;
+            }
+            lastKnownDrawStatus = data.draw ? data.draw.status : null;
+
+            if (data.poolCount > 0) {
+                startTicketTicker(data.ticketNumbers);
+            } else {
+                stopTicketTicker();
+                inner.innerHTML = `AWAITING<br>POOL ENTRY`;
+            }
+
+            if (data.settings.target_datetime) {
+                renderCountdown(data.settings.target_datetime, data.draw ? data.draw.name : null);
+            } else {
+                document.getElementById('cardTitle').textContent = 'Draw Open';
+                document.getElementById('cardSub').textContent = 'No schedule set yet — check back soon.';
+                document.getElementById('cardBody').innerHTML = `<span style="color:#64748b; font-size:12px;">Monitoring live — this updates automatically.</span>`;
+            }
+        } catch (e) {
+            renderOffline();
+        }
+    }
+
+    let bgAudioLoaded = false;
+    async function loadBackgroundAudio() {
+        try {
+            const { deployments } = await api.get('/shared/audio-deployments');
+            const audioEl = document.getElementById('bgAudio');
+            if (deployments.live_draw && deployments.live_draw.file_url) {
+                audioEl.src = deployments.live_draw.file_url;
+                bgAudioLoaded = true;
+            } else {
+                bgAudioLoaded = false;
+            }
+        } catch (e) { /* non-fatal — page works fine without background sound */ }
+    }
+
+    let wantsAudioPlaying = false;
+    function setBackgroundAudioPlaying(shouldPlay) {
+        wantsAudioPlaying = shouldPlay;
+        const audioEl = document.getElementById('bgAudio');
+        if (!bgAudioLoaded || !audioEl.src) return;
+        if (shouldPlay) {
+            audioEl.volume = 0.5;
+            // Muted autoplay is allowed by every browser, even with zero
+            // interaction — so start muted, then unmute right away. If the
+            // unmute itself gets blocked, the interaction listener below
+            // catches the very next mouse move/scroll/tap to unmute it.
+            audioEl.muted = true;
+            audioEl.play().then(() => {
+                audioEl.muted = false;
+            }).catch(() => { /* even muted autoplay blocked — interaction listener will retry */ });
+        } else {
+            audioEl.pause();
+        }
+    }
+    // Most browsers block audible autoplay until the user has interacted
+    // with the page at least once — this catches the very first interaction
+    // (including just moving the mouse) to unmute/start the music.
+    ['click', 'touchstart', 'keydown', 'mousemove', 'scroll'].forEach(evt => {
+        document.addEventListener(evt, () => {
+            if (!wantsAudioPlaying) return;
+            const audioEl = document.getElementById('bgAudio');
+            audioEl.muted = false;
+            if (audioEl.paused) audioEl.play().catch(() => {});
+        }, { once: true, passive: true });
+    });
+
+    document.addEventListener('auth-ready', () => {
+        loadBackgroundAudio();
+        refresh();
+        setInterval(refresh, 8000);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+node_modules/
+.env
+data/
+uploads/*
+!uploads/.gitkeep
+SUPERADMIN_TEMP_CREDENTIAL.txt
+*.log
+.DS_Store

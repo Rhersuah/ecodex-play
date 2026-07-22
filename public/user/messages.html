@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Support Messages</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--accent-green:#10b981;--text-muted:#94a3b8;--border-color:#1e293b;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding:70px 20px 20px;}
+  .wrap{max-width:640px;margin:0 auto;width:100%;display:flex;flex-direction:column;height:calc(100dvh - 90px);}
+  .header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .header a{color:var(--text-muted);text-decoration:none;font-size:20px;}
+  .header h1{font-size:18px;font-weight:700;}
+  .header p{font-size:12px;color:var(--text-muted);}
+  .thread{flex:1;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;}
+  .msg{max-width:80%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.4;}
+  .msg.me{align-self:flex-end;background:var(--accent-green);color:#fff;border-bottom-right-radius:4px;}
+  .msg.support{align-self:flex-start;background:#1e293b;color:#e2e8f0;border-bottom-left-radius:4px;}
+  .msg .who{font-size:10px;opacity:.7;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}
+  .composer{display:flex;gap:10px;margin-top:14px;flex-shrink:0;position:sticky;bottom:0;background:var(--bg-main);padding-top:4px;}
+  .composer input{flex:1;background:#0e1420;border:1px solid var(--border-color);border-radius:12px;padding:12px 16px;color:#fff;font-size:14px;}
+  .composer button{background:var(--accent-green);border:none;color:#fff;padding:0 20px;border-radius:12px;font-weight:600;cursor:pointer;}
+  .empty{color:var(--text-muted);text-align:center;padding:30px 0;font-size:13px;}
+</style>
+</head>
+<body>
+<a href="user.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+  <div class="wrap">
+    <div class="header">
+      <div><h1>Support Messages</h1><p>Direct line to the E-Codex Play team</p></div>
+    </div>
+    <div class="thread" id="thread"><div class="empty">Loading...</div></div>
+    <div class="composer">
+      <input type="text" id="msgInput" placeholder="Write your message..." onkeydown="if(event.key==='Enter') sendMsg()">
+      <button onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+<script src="/assets/js/api.js"></script>
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script>
+  async function loadThread() {
+    try {
+      const { messages } = await api.get('/shared/messages/my-thread');
+      const el = document.getElementById('thread');
+      if (!messages.length) { el.innerHTML = '<div class="empty">No messages yet. Start the conversation below.</div>'; return; }
+      el.innerHTML = messages.map(m => `
+        <div class="msg ${m.from}">
+          <div class="who">${m.displayName}</div>
+          ${escapeHtml(m.body)}
+          <div style="font-size:10px; opacity:.6; margin-top:4px;">${new Date(m.created_at).toLocaleString()}</div>
+        </div>
+      `).join('');
+      el.scrollTop = el.scrollHeight;
+
+      // Mark the latest support reply as "read" so the notification dot clears.
+      const lastSupportMsg = [...messages].reverse().find(m => m.from === 'support');
+      if (lastSupportMsg) {
+        localStorage.setItem('ecodex_last_read_support_msg', lastSupportMsg.created_at);
+      }
+    } catch (e) { showToast(e.message, 'error'); }
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+  }
+
+  async function sendMsg() {
+    const input = document.getElementById('msgInput');
+    const body = input.value.trim();
+    if (!body) return;
+    input.value = '';
+    try {
+      await api.post('/shared/messages/my-thread', { body });
+      loadThread();
+    } catch (e) { showToast(e.message, 'error'); }
+  }
+
+  document.addEventListener('auth-ready', () => {
+    loadThread();
+    setInterval(loadThread, 10000);
+  });
+</script>
+</body>
+</html>

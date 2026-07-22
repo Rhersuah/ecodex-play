@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Winner Approval</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:480px;margin:0 auto;}
+  h1{font-size:20px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:12px;margin-bottom:20px;}
+  .row{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .row .name{font-weight:700;font-size:13px;}
+  .row .meta{font-size:11px;color:var(--text-muted);margin-top:3px;}
+  .badge{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:5px;display:inline-block;margin-top:6px;background:rgba(59,130,246,0.15);color:#3b82f6;}
+  .btn{width:auto;margin-top:10px;border:none;padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;color:#fff;background:var(--accent-green);}
+  .empty{color:var(--text-muted);font-size:13px;font-style:italic;padding:30px;text-align:center;background:var(--bg-card);border:1px dashed var(--border-color);border-radius:16px;}
+#winnersList{max-height:520px; overflow-y:auto;}
+</style>
+</head>
+<body>
+<a href="draw-settings.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Draw Management">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>Winner Approval</h1>
+    <p class="sub">These winners have already been verified by an Admin. Give final approval to officially confirm the prize.</p>
+    <div id="winnersList"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    function medalBadge(rank) {
+        if (rank === 1) return '<span style="background:linear-gradient(135deg,#facc15,#ca8a04); color:#3f2d00; font-size:11px; font-weight:800; padding:3px 10px; border-radius:6px;">🥇 1ST PLACE — GOLD</span>';
+        if (rank === 2) return '<span style="background:linear-gradient(135deg,#e2e8f0,#94a3b8); color:#1e293b; font-size:11px; font-weight:800; padding:3px 10px; border-radius:6px;">🥈 2ND PLACE — SILVER</span>';
+        if (rank === 3) return '<span style="background:linear-gradient(135deg,#f97316,#9a3412); color:#fff; font-size:11px; font-weight:800; padding:3px 10px; border-radius:6px;">🥉 3RD PLACE — BRONZE</span>';
+        return `<span style="background:#334155; color:#cbd5e1; font-size:11px; font-weight:800; padding:3px 10px; border-radius:6px;">#${rank || '-'} PLACE</span>`;
+    }
+
+    async function loadWinners() {
+        const list = document.getElementById('winnersList');
+        try {
+            const { winners } = await api.get('/superadmin/winners/pending');
+            list.innerHTML = winners.length ? winners.map(w => `
+                <div class="row">
+                    <div class="name">${escapeHtml(w.full_name)} <span style="color:var(--text-muted); font-weight:400;">@${escapeHtml(w.username)}</span></div>
+                    <div class="meta">Draw: ${escapeHtml(w.draw_name)} — Ticket #${escapeHtml(w.ticket_number)}</div>
+                    <div class="meta">Contact: ${escapeHtml(w.mobile || 'N/A')} • ${escapeHtml(w.email || 'N/A')}</div>
+                    <div style="margin-top:8px;">${medalBadge(w.rank)}</div>
+                    <label style="display:block; margin-top:10px; font-size:11px; color:var(--text-muted);">Prize Amount (₱)</label>
+                    <input type="number" id="amount-${w.source}-${w.id}" placeholder="e.g. 500" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:8px; padding:8px 10px; color:#fff; font-size:13px; margin:4px 0 10px;">
+                    <button class="btn" onclick="approveWinner('${w.source}', '${w.id}')"><i class="fa-solid fa-trophy"></i> Approve & Credit Balance</button>
+                </div>
+            `).join('') : `<div class="empty">No winners currently awaiting final approval.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function approveWinner(source, id) {
+        const amount = parseFloat(document.getElementById(`amount-${source}-${id}`).value);
+        if (!amount || amount <= 0) return showToast('Please enter a valid prize amount.', 'error');
+        try {
+            await api.post(`/superadmin/winners/${source}/${id}/approve`, { amount });
+            showToast('Winner approved — prize credited to their balance!', 'success');
+            loadWinners();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', loadWinners);
+</script>
+</body>
+</html>

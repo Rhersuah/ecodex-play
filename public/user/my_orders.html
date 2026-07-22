@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | My Orders</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:70px 20px 40px;}
+  .wrap{max-width:560px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .order-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:18px;margin-bottom:14px;}
+  .order-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+  .order-name{font-size:14px;font-weight:700;}
+  .order-meta{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .status-badge{font-size:10px;font-weight:800;padding:4px 10px;border-radius:8px;text-transform:uppercase;}
+  .status-pending_admin,.status-pending_superadmin{background:rgba(245,158,11,0.15);color:#f59e0b;}
+  .status-to_ship{background:rgba(59,130,246,0.15);color:#3b82f6;}
+  .status-to_receive{background:rgba(168,85,247,0.15);color:#a855f7;}
+  .status-received{background:rgba(16,185,129,0.15);color:#10b981;}
+  .status-rejected,.status-cancelled{background:rgba(239,68,68,0.15);color:#ef4444;}
+  .track-steps{display:flex;justify-content:space-between;margin:14px 0;position:relative;}
+  .track-steps::before{content:'';position:absolute;top:11px;left:20px;right:20px;height:2px;background:var(--border-color);z-index:0;}
+  .track-step{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;}
+  .track-dot{width:24px;height:24px;border-radius:50%;background:var(--border-color);display:flex;align-items:center;justify-content:center;font-size:11px;}
+  .track-dot.done{background:var(--accent-green);}
+  .track-label{font-size:9px;color:var(--text-muted);text-align:center;}
+  .btn{padding:11px 16px;border:none;border-radius:10px;background:var(--accent-green);color:#fff;font-weight:700;font-size:12px;cursor:pointer;width:100%;}
+  .empty{color:var(--text-muted);font-size:13px;font-style:italic;padding:30px;text-align:center;}
+</style>
+</head>
+<body>
+<a href="shop.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Shop">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+<div class="wrap">
+    <h1>My Orders</h1>
+    <p class="sub">Track your shop orders from review all the way to delivery.</p>
+    <div id="ordersList"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    const STATUS_LABELS = {
+        pending_admin: 'Waiting for Admin Review',
+        pending_superadmin: 'Waiting for Final Approval',
+        to_ship: 'Being Packaged',
+        to_receive: 'Ready for Collection',
+        received: 'Received',
+        rejected: 'Rejected',
+        cancelled: 'Cancelled',
+    };
+
+    function trackStep(status, step) {
+        // Maps each status to how far along the 4-step journey it is.
+        const order = ['pending_admin', 'pending_superadmin', 'to_ship', 'to_receive', 'received'];
+        const idx = order.indexOf(status);
+        return idx >= step ? 'done' : '';
+    }
+
+    async function loadOrders() {
+        const list = document.getElementById('ordersList');
+        try {
+            const { orders } = await api.get('/user/shop-orders/mine');
+            if (!orders.length) { list.innerHTML = `<div class="empty">No orders yet. Visit the Shop to get started!</div>`; return; }
+
+            list.innerHTML = orders.map(o => `
+                <div class="order-card">
+                    <div class="order-top">
+                        <div>
+                            <div class="order-name">${escapeHtml(o.item_name)} x${o.quantity}</div>
+                            <div class="order-meta">₱${parseFloat(o.total_price).toFixed(2)} — ${new Date(o.created_at).toLocaleDateString()}</div>
+                        </div>
+                        <span class="status-badge status-${o.status}">${STATUS_LABELS[o.status] || o.status}</span>
+                    </div>
+                    ${!['rejected', 'cancelled'].includes(o.status) ? `
+                        <div class="track-steps">
+                            <div class="track-step"><div class="track-dot ${trackStep(o.status, 0)}"><i class="fa-solid fa-check"></i></div><div class="track-label">Admin<br>Review</div></div>
+                            <div class="track-step"><div class="track-dot ${trackStep(o.status, 1)}"><i class="fa-solid fa-check"></i></div><div class="track-label">Final<br>Approval</div></div>
+                            <div class="track-step"><div class="track-dot ${trackStep(o.status, 2)}"><i class="fa-solid fa-check"></i></div><div class="track-label">To<br>Ship</div></div>
+                            <div class="track-step"><div class="track-dot ${trackStep(o.status, 3)}"><i class="fa-solid fa-check"></i></div><div class="track-label">To<br>Receive</div></div>
+                            <div class="track-step"><div class="track-dot ${trackStep(o.status, 4)}"><i class="fa-solid fa-check"></i></div><div class="track-label">Received</div></div>
+                        </div>
+                    ` : ''}
+                    ${o.status === 'to_receive' ? `<button class="btn" onclick="confirmReceipt('${o.id}')"><i class="fa-solid fa-box-open"></i> Confirm I Received This</button>` : ''}
+                </div>
+            `).join('');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function confirmReceipt(id) {
+        if (!(await appConfirm('Confirm that you received this order?', 'Confirm Receipt'))) return;
+        try {
+            await api.post(`/user/shop-orders/${id}/confirm-receipt`, {});
+            showToast('Thanks for confirming!', 'success');
+            loadOrders();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', loadOrders);
+</script>
+</body>
+</html>

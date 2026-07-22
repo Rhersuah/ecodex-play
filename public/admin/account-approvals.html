@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Account Approvals</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:720px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .row{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:18px;margin-bottom:14px;}
+  .row .name{font-weight:700;font-size:15px;}
+  .row .meta{font-size:12px;color:var(--text-muted);margin-top:4px;}
+  .btn-row{display:flex; gap:8px; margin-top:14px;}
+  .btn{flex:1;border:none;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;}
+  .btn-approve{background:var(--accent-green);}
+  .btn-reject{background:#ef4444;}
+  .empty{color:var(--text-muted);font-size:13px;font-style:italic;padding:30px;text-align:center;background:var(--bg-card);border:1px dashed var(--border-color);border-radius:16px;}
+#pendingList{max-height:520px; overflow-y:auto;}
+</style>
+</head>
+<body>
+<a href="admin.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>Signup Verifications — Tier 1</h1>
+    <p class="sub">New signups waiting for your review. Release a code to send it forward to Super Admin for final release — you do not email anything yourself at this step.</p>
+    <div id="pendingCodesList"><div class="empty">Loading...</div></div>
+
+    <h1 style="margin-top:34px;">Account Approvals</h1>
+    <p class="sub">These users have already verified their email address and are waiting for a final human check before they can log in.</p>
+    <div id="pendingList"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    async function loadPendingCodes() {
+        const list = document.getElementById('pendingCodesList');
+        try {
+            const { pending } = await api.get('/admin/signup-verifications/pending');
+            list.innerHTML = pending.length ? pending.map(u => `
+                <div class="row">
+                    <div class="name">${escapeHtml(u.full_name)} <span style="color:var(--text-muted); font-weight:400;">@${escapeHtml(u.username)}</span></div>
+                    <div class="meta"><i class="fa-solid fa-envelope"></i> ${escapeHtml(u.email)} &nbsp; <i class="fa-solid fa-phone"></i> ${escapeHtml(u.mobile || 'N/A')}</div>
+                    <div class="meta">Signed up: ${new Date(u.created_at).toLocaleString()}</div>
+                    ${u.rejection_reason ? `<div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:11px; padding:8px 10px; border-radius:8px; margin-top:8px;"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(u.rejection_reason)}</div>` : ''}
+                    <div style="background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:12px; font-family:monospace; font-size:20px; font-weight:800; letter-spacing:3px; color:#10b981; margin:10px 0; text-align:center;">${escapeHtml(u.email_verification_code)}</div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-approve" style="flex:1;" onclick="releaseTier1(${u.id})"><i class="fa-solid fa-paper-plane"></i> Release</button>
+                        <button class="btn btn-reject" style="flex:1;" onclick="rejectTier1(${u.id})"><i class="fa-solid fa-xmark"></i> Reject</button>
+                    </div>
+                </div>
+            `).join('') : `<div class="empty">No new signups waiting for review.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function releaseTier1(id) {
+        try {
+            await api.post(`/admin/signup-verifications/${id}/release`, {});
+            showToast('Released for Super Admin final approval.', 'success');
+            loadPendingCodes();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function rejectTier1(id) {
+        if (!(await appConfirm('Reject this signup? The applicant will not be able to complete registration.', 'Reject'))) return;
+        try {
+            await api.post(`/admin/signup-verifications/${id}/reject`, {});
+            showToast('Signup rejected.', 'success');
+            loadPendingCodes();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function copyCode(code, btn) {
+        navigator.clipboard.writeText(code).then(() => {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+            setTimeout(() => { btn.innerHTML = original; }, 2000);
+        }).catch(() => showToast('Could not copy — please select the code manually.', 'error'));
+    }
+
+    async function loadPending() {
+        const list = document.getElementById('pendingList');
+        try {
+            const { pending } = await api.get('/shared/account-approvals');
+            list.innerHTML = pending.length ? pending.map(u => `
+                <div class="row">
+                    <div class="name">${escapeHtml(u.full_name)} <span style="color:var(--text-muted); font-weight:400;">@${escapeHtml(u.username)}</span></div>
+                    <div class="meta"><i class="fa-solid fa-envelope"></i> ${escapeHtml(u.email)} &nbsp; <i class="fa-solid fa-phone"></i> ${escapeHtml(u.mobile || 'N/A')}</div>
+                    <div class="meta"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(u.address || 'No address on file')}</div>
+                    <div class="meta">Signed up: ${new Date(u.created_at).toLocaleString()}</div>
+                    ${u.rejection_reason ? `<div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:11px; padding:8px 10px; border-radius:8px; margin:8px 0;"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(u.rejection_reason)}</div>` : ''}
+                    ${(u.id_photo || u.selfie_photo) ? `
+                        <div style="margin-top:10px;">
+                            <div style="font-size:11px; color:#f59e0b; margin-bottom:6px;"><i class="fa-solid fa-magnifying-glass"></i> Compare the face in the ID with the live selfie before approving.</div>
+                            <div style="display:flex; gap:10px;">
+                                <div style="flex:1; text-align:center;">
+                                    <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">Uploaded ID</div>
+                                    ${u.id_photo ? `<a href="${u.id_photo}" target="_blank"><img src="${u.id_photo}" style="width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px; border:1px solid var(--border-color);"></a>` : '<div class="meta" style="color:#ef4444;">No ID on file</div>'}
+                                </div>
+                                <div style="flex:1; text-align:center;">
+                                    <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">Live Selfie</div>
+                                    ${u.selfie_photo ? `<a href="${u.selfie_photo}" target="_blank"><img src="${u.selfie_photo}" style="width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px; border:1px solid var(--border-color);"></a>` : '<div class="meta" style="color:#ef4444;">No selfie on file</div>'}
+                                </div>
+                            </div>
+                        </div>
+                    ` : '<div class="meta" style="color:#ef4444;">No ID or selfie on file</div>'}
+                    <div class="btn-row">
+                        <button class="btn btn-approve" onclick="review(${u.id}, 'approve')"><i class="fa-solid fa-check"></i> Approve</button>
+                        <button class="btn btn-reject" onclick="review(${u.id}, 'reject')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                    </div>
+                </div>
+            `).join('') : `<div class="empty">No accounts waiting for approval.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function review(id, action) {
+        try {
+            await api.post(`/shared/account-approvals/${id}/${action}`, {});
+            showToast(action === 'approve' ? 'Account approved!' : 'Account rejected.', 'success');
+            loadPending();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', () => { loadPendingCodes(); loadPending(); });
+</script>
+</body>
+</html>

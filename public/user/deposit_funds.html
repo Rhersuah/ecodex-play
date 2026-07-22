@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Portal | Deposit Funds</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #070a13; --bg-card: #0f1524; --accent-blue: #3b82f6;
+            --accent-green: #10b981; --accent-orange: #f59e0b; --accent-red: #ef4444;
+            --text-main: #ffffff; --text-muted: #64748b; --border-color: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 70px 15px 40px; display: flex; flex-direction: column; align-items: center; }
+        
+        .portal-container { width: 100%; max-width: 1100px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; }
+        @media (max-width: 850px) { .portal-container { grid-template-columns: 1fr; } }
+
+        .card-panel { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        
+        .role-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 5px 14px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 15px; }
+        .panel-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.5px; }
+        .panel-subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 25px; }
+
+        .balance-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--border-color); padding: 20px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .balance-amount { font-size: 32px; font-weight: 700; color: var(--accent-green); margin-top: 5px; }
+
+        .admin-methods { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; }
+        .method-item { background: #070a13; border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; }
+        .method-icon { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; }
+        .icon-gcash { background: #176bf2; color: #fff; }
+        .icon-bpi { background: #b91c1c; color: #fff; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-control { width: 100%; background: #070a13; border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 10px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .form-control:focus { border-color: var(--accent-blue); }
+        
+        .file-upload-wrapper { border: 2px dashed var(--border-color); border-radius: 10px; padding: 15px; text-align: center; background: #070a13; cursor: pointer; transition: border-color 0.2s; }
+        .file-upload-wrapper:hover { border-color: var(--accent-blue); }
+        .file-upload-wrapper i { font-size: 24px; color: var(--text-muted); margin-bottom: 5px; }
+        .file-preview-img { max-width: 100%; max-height: 120px; margin-top: 10px; border-radius: 6px; display: none; border: 1px solid var(--border-color); }
+
+        .radio-selectors { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .radio-label { border: 1px solid var(--border-color); background: #070a13; padding: 14px; border-radius: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .radio-label input { accent-color: var(--accent-blue); }
+
+        .btn-submit { width: 100%; background: var(--accent-blue); color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-submit:hover { opacity: 0.9; }
+
+        .history-list { display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto; }
+        .history-item { background: #070a13; border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .tx-meta { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .tx-status { font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 5px; }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .status-approved { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .proof-thumbnail { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color); cursor: pointer; }
+
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition: opacity 0.2s ease; z-index:9999; }
+        .modal-overlay.active { opacity:1; pointer-events:all; }
+        .modal-box { background:var(--bg-card); border:1px solid var(--border-color); width:90%; max-width:400px; padding:25px; border-radius:20px; text-align:center; }
+        .otp-input { width: 160px; text-align: center; font-size: 24px; font-weight: 700; letter-spacing: 6px; margin: 15px 0; padding: 8px; }
+    </style>
+</head>
+<body>
+<a href="balance.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Balance">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+
+    <div class="portal-container">
+        
+        <!-- Left Panel: Deposit Request Form -->
+        <div class="card-panel">
+            <span class="role-badge">Secure Funding</span>
+            <h2 class="panel-title">Deposit Request Form</h2>
+            <p class="panel-subtitle">Transfer funds to an authorized administrator account listed below before submitting your request.</p>
+            
+            <label style="display:block; font-size:11px; font-weight:600; color:#64748b; margin-bottom:8px; text-transform:uppercase;">Where to Send Payment (Deposit Destinations):</label>
+            <div class="admin-methods" id="destinationsList">
+                <div style="color:#64748b; font-size:13px; font-style:italic;">Loading...</div>
+            </div>
+
+            <form id="depositRequestForm" onsubmit="submitDeposit(event)">
+                <div class="form-group">
+                    <label>Select Gateway:</label>
+                    <div class="radio-selectors" id="gatewayRadios">
+                        <div style="color:#64748b; font-size:12px; font-style:italic;">Loading...</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Reference Note (optional)</label>
+                    <input type="text" id="senderName" class="form-control" placeholder="e.g. Your transaction reference number">
+                </div>
+
+                <div class="form-group">
+                    <label>Deposit Amount (PHP)</label>
+                    <input type="number" id="depositAmount" class="form-control" placeholder="₱0.00" min="1" step="any" required>
+                </div>
+
+                <!-- Proof of Payment Upload Section -->
+                <div class="form-group">
+                    <label>Upload Proof of Payment (Image Document)</label>
+                    <div class="file-upload-wrapper" onclick="document.getElementById('proofOfPaymentInput').click()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <div style="font-size: 13px; font-weight: 500; color: #94a3b8;" id="uploadText">Click to upload screenshot / receipt</div>
+                        <input type="file" id="proofOfPaymentInput" accept="image/*" style="display: none;" onchange="handleFilePreview(this)" required>
+                        <img id="proofPreview" class="file-preview-img" alt="Receipt preview">
+                    </div>
+                </div>
+
+                <div id="feeNotice" style="background:#0b0f17; border:1px solid #1e293b; border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:12px; color:#94a3b8; display:none;">
+                    <i class="fa-solid fa-circle-info" style="color:#f59e0b;"></i>
+                    A <strong id="feePercentLabel" style="color:#f59e0b;">0%</strong> platform service fee applies to deposits. This helps cover system maintenance, domain, and security costs.
+                </div>
+                <label style="display:flex; align-items:flex-start; gap:10px; font-size:12px; color:#94a3b8; margin-bottom:16px; cursor:pointer;">
+                    <input type="checkbox" id="agreeFeeCheckbox" style="margin-top:2px; width:16px; height:16px; flex-shrink:0;" required>
+                    <span>I understand and agree to the fees</span>
+                </label>
+
+                <button type="submit" class="btn-submit" id="depositSubmitBtn">
+                    <i class="fa-solid fa-paper-plane"></i> Submit Deposit Request
+                </button>
+            </form>
+        </div>
+
+        <!-- Right Panel: Wallet Balance & Audit Logs -->
+        <div class="card-panel" style="display: flex; flex-direction: column;">
+            <span class="role-badge" style="background:rgba(59,130,246,0.1); color:var(--accent-blue); border-color:rgba(59,130,246,0.2);">Account Assets</span>
+            <h2 class="panel-title">My Wallet Balance</h2>
+            <p class="panel-subtitle">Funds will automatically reflect here once validated and approved by the admin.</p>
+            
+            <div class="balance-card">
+                <div>
+                    <div style="font-size:12px; color:#94a3b8; text-transform:uppercase;">Available Funds</div>
+                    <div class="balance-amount" id="userWalletBalance">₱0.00</div>
+                </div>
+                <i class="fa-solid fa-wallet" style="font-size:36px; color:#1e293b;"></i>
+            </div>
+
+            <h3 style="font-size:15px; font-weight:600; margin-bottom:15px; color:#fff;">Request Audit History</h3>
+            <div class="history-list" id="depositHistoryContainer"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let selectedFile = null;
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        function handleFilePreview(input) {
+            const file = input.files[0];
+            const preview = document.getElementById('proofPreview');
+            const uploadText = document.getElementById('uploadText');
+            selectedFile = file || null;
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = "inline-block";
+                    uploadText.innerText = "Change selected file (" + file.name + ")";
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = "none";
+                uploadText.innerText = "Click to upload screenshot / receipt";
+            }
+        }
+
+        async function loadDestinations() {
+            try {
+                const { destinations } = await api.get('/shared/deposit-destinations');
+                const list = document.getElementById('destinationsList');
+                const radios = document.getElementById('gatewayRadios');
+
+                if (!destinations.length) {
+                    list.innerHTML = `<div style="color:#64748b; font-size:13px; font-style:italic;">No deposit destination available yet. Please contact Support.</div>`;
+                    radios.innerHTML = '';
+                    return;
+                }
+
+                list.innerHTML = destinations.map(d => `
+                    <div class="method-item">
+                        <div class="method-icon icon-gcash">${escapeHtml(d.gateway_name[0])}</div>
+                        <div>
+                            <div style="font-weight:600; font-size:14px;">${escapeHtml(d.gateway_name)}</div>
+                            <div style="font-size:13px; color:#94a3b8;">${escapeHtml(d.account_number)}</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Account Name: ${escapeHtml(maskName(d.account_name))}</div>
+                            ${d.instructions ? `<div style="font-size:11px; color:var(--text-muted); margin-top:3px;">${escapeHtml(d.instructions)}</div>` : ''}
+                            ${d.qr_image ? `<img src="${d.qr_image}" style="max-width:120px; margin-top:8px; border-radius:8px;">` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+                radios.innerHTML = destinations.map((d, i) => `
+                    <label class="radio-label">
+                        <input type="radio" name="paymentGateway" value="${escapeHtml(d.gateway_name)}" ${i === 0 ? 'checked' : ''} required> ${escapeHtml(d.gateway_name)}
+                    </label>
+                `).join('');
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function loadWalletAndHistory() {
+            try {
+                const [{ balance }, { transactions }] = await Promise.all([
+                    api.get('/user/balance'),
+                    api.get('/user/transactions'),
+                ]);
+                document.getElementById('userWalletBalance').textContent = pesos(balance);
+
+                const deposits = transactions.filter(t => t.txType === 'deposit');
+                const historyContainer = document.getElementById('depositHistoryContainer');
+                historyContainer.innerHTML = deposits.length ? deposits.map(req => `
+                    <div class="history-item">
+                        <div style="flex: 1;">
+                            <div style="font-weight:600; font-size:14px; color:#fff;">₱${parseFloat(req.amount).toFixed(2)}</div>
+                            <div class="tx-meta">Via ${escapeHtml(req.gateway)}</div>
+                            <div style="font-size:10px; color:#475569; font-family:monospace; margin-top:2px;">Ref: ${req.id.slice(0,8)}</div>
+                            <span class="tx-status ${req.status === 'approved' ? 'status-approved' : 'status-pending'}">
+                                ${req.status === 'approved' ? '<i class="fa-solid fa-circle-check"></i> Approved' : req.status === 'rejected' ? '<i class="fa-solid fa-circle-xmark"></i> Rejected' : '<i class="fa-solid fa-clock"></i> Pending'}
+                            </span>
+                        </div>
+                        ${req.proof_image ? `<div><img src="${req.proof_image}" class="proof-thumbnail" onclick="window.open(this.src)" title="View submitted document proof"></div>` : ''}
+                    </div>
+                `).reverse().join('') : `<div style="color:var(--text-muted); font-size:13px; font-style:italic; padding:15px; text-align:center;">No deposit records found.</div>`;
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function submitDeposit(event) {
+            event.preventDefault();
+            const gatewayInput = document.querySelector('input[name="paymentGateway"]:checked');
+            if (!gatewayInput) return showToast('Please select a gateway.', 'error');
+            if (!selectedFile) return showToast('Please upload proof of payment first.', 'error');
+            if (!document.getElementById('agreeFeeCheckbox').checked) return showToast('Please check the box to agree to the platform service fee before submitting.', 'error');
+
+            const amount = document.getElementById('depositAmount').value;
+            const referenceNote = document.getElementById('senderName').value.trim();
+
+            setBtnLoading('depositSubmitBtn', true);
+            try {
+                const compressed = await compressImage(selectedFile);
+                const form = new FormData();
+                form.append('amount', amount);
+                form.append('gateway', gatewayInput.value);
+                form.append('referenceNote', referenceNote);
+                form.append('proof', compressed);
+
+                const result = await api.post('/user/deposits', form, true);
+                document.getElementById('depositRequestForm').reset();
+                document.getElementById('proofPreview').style.display = 'none';
+                document.getElementById('uploadText').innerText = 'Click to upload screenshot / receipt';
+                selectedFile = null;
+                loadWalletAndHistory();
+                showDepositReceipt(result, gatewayInput.value);
+            } catch (e) {
+                showToast(e.message, 'error');
+            } finally {
+                setBtnLoading('depositSubmitBtn', false, '<i class="fa-solid fa-paper-plane"></i> Submit Deposit Request');
+            }
+        }
+
+        function showDepositReceipt(result, gateway) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:6000; display:flex; align-items:center; justify-content:center; padding:20px;';
+            overlay.innerHTML = `
+                <div style="background:var(--bg-card,#131926); border:1px solid var(--border-color,#1e293b); border-radius:20px; max-width:380px; width:100%; padding:26px;">
+                    <div style="text-align:center; margin-bottom:16px;">
+                        <i class="fa-solid fa-circle-check" style="font-size:38px; color:#10b981;"></i>
+                        <h2 style="font-size:16px; margin-top:10px;">Deposit Request Submitted</h2>
+                        <p style="font-size:11px; color:#64748b;">Digital Receipt — keep this for your records</p>
+                    </div>
+                    <div style="font-size:13px; line-height:1.9;">
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748b;">Deposit ID</span><strong style="font-family:monospace; color:#10b981;">${result.displayId}</strong></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748b;">Gateway</span><strong>${gateway}</strong></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748b;">Amount</span><strong>₱${result.amount.toFixed(2)}</strong></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748b;">Service Fee</span><strong style="color:#f59e0b;">-₱${result.feeAmount.toFixed(2)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; border-top:1px solid #1e293b; margin-top:6px; padding-top:6px;"><span style="color:#64748b;">Net Credit (once approved)</span><strong style="color:#10b981;">₱${result.netAmount.toFixed(2)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:6px;"><span style="color:#64748b;">Date</span><strong>${new Date().toLocaleString()}</strong></div>
+                    </div>
+                    <p style="font-size:11px; color:#f59e0b; margin-top:14px;"><i class="fa-solid fa-hourglass-half"></i> Status: Awaiting Admin review, then Super Admin final approval.</p>
+                    <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%; padding:12px; border:none; border-radius:10px; background:#10b981; color:#fff; font-weight:700; font-size:13px; cursor:pointer; margin-top:14px;">Close</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        async function loadPlatformFee() {
+            try {
+                const data = await api.get('/user/platform-fee');
+                if (data.depositFeePercent > 0) {
+                    document.getElementById('feePercentLabel').textContent = data.depositFeePercent + '%';
+                    document.getElementById('feeNotice').style.display = 'block';
+                }
+            } catch (e) { /* non-fatal */ }
+        }
+
+        document.addEventListener('auth-ready', () => {
+            loadDestinations();
+            loadWalletAndHistory();
+            loadPlatformFee();
+        });
+    </script>
+</body>
+</html>

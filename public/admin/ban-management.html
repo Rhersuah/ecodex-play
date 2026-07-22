@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Ban Management</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-red:#ef4444;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:680px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;line-height:1.5;}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:22px;margin-bottom:26px;}
+  label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:6px;}
+  select,input,textarea{width:100%;background:#0b0f17;border:1px solid var(--border-color);border-radius:10px;padding:12px;color:#fff;font-size:14px;margin-bottom:16px;}
+  textarea{resize:vertical;min-height:70px;}
+  .btn{width:100%;padding:13px;border:none;border-radius:10px;background:var(--accent-red);color:#fff;font-weight:700;font-size:13px;cursor:pointer;}
+  .row{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:16px 18px;margin-bottom:12px;}
+  .row .name{font-weight:700;font-size:14px;}
+  .row .meta{font-size:12px;color:var(--text-muted);margin-top:4px;}
+  .status-tag{font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:5px;display:inline-block;margin-top:6px;}
+  .tag-pending{background:rgba(245,158,11,0.15);color:#f59e0b;}
+  .tag-approved{background:rgba(239,68,68,0.15);color:var(--accent-red);}
+  .tag-rejected{background:rgba(148,163,184,0.15);color:#94a3b8;}
+  .empty{color:var(--text-muted);font-size:13px;font-style:italic;padding:24px;text-align:center;background:var(--bg-card);border:1px dashed var(--border-color);border-radius:16px;}
+#requestsList{max-height:520px; overflow-y:auto;}
+</style>
+</head>
+<body>
+<div id="banEndsAtOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:5000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#131926; border:1px solid #1e293b; border-radius:16px; max-width:340px; width:100%; padding:22px;">
+        <h3 style="font-size:15px; margin-bottom:14px;"><i class="fa-solid fa-clock" style="color:#f59e0b;"></i> When does this ban end?</h3>
+        <input type="datetime-local" id="banEndsAtInput" style="width:100%; background:#0b0f17; border:1px solid #1e293b; border-radius:10px; padding:10px 12px; color:#fff; font-size:13px; margin-bottom:14px;">
+        <div style="display:flex; gap:8px;">
+            <button onclick="closeBanEndsAtModal()" style="flex:1; padding:11px; border:none; border-radius:10px; background:#1e293b; color:#94a3b8; font-weight:600; font-size:13px; cursor:pointer;">Cancel</button>
+            <button onclick="confirmBanEndsAt()" style="flex:1; padding:11px; border:none; border-radius:10px; background:#10b981; color:#fff; font-weight:700; font-size:13px; cursor:pointer;">Set</button>
+        </div>
+    </div>
+</div>
+<a href="user_management.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to User Management">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>Ban Management</h1>
+    <p class="sub">Submit a ban request for a user. A Super Admin must approve it before the ban takes effect. Users are only banned from draws/events, not from logging in.</p>
+
+    <div class="card">
+        <form id="banForm" onsubmit="submitRequest(event)">
+            <label>Select User</label>
+            <select id="banUser" required></select>
+
+            <label>Ban Type</label>
+            <select id="banType" onchange="toggleFields()">
+                <option value="permanent">Permanent</option>
+                <option value="temporary">Temporary (specific date & time)</option>
+                <option value="event">Event-specific</option>
+            </select>
+
+            <div id="durationField" style="display:none;">
+                <label>Ban Ends At (specific date & time)</label>
+                <div id="banEndsAtSummary" style="background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; font-size:13px; color:#94a3b8; margin-bottom:6px; cursor:pointer;" onclick="openBanEndsAtModal()">Click to set date & time...</div>
+                <input type="hidden" id="banEndsAt">
+                <p style="font-size:11px; color:#64748b; margin-top:-2px; margin-bottom:14px;">The countdown starts as soon as this is approved. The ban lifts automatically once this date/time passes.</p>
+            </div>
+
+            <div id="eventField" style="display:none;">
+                <label>Event Name</label>
+                <input type="text" id="banEventName" placeholder="e.g. Anniversary Raffle">
+            </div>
+
+            <label>Reason</label>
+            <textarea id="banReason" placeholder="Explain why this user should be banned..." required></textarea>
+
+            <button type="submit" class="btn"><i class="fa-solid fa-gavel"></i> Submit Ban Request to Super Admin</button>
+        </form>
+    </div>
+
+    <h2 style="font-size:15px; margin-bottom:14px;">My Ban Requests</h2>
+    <div id="requestsList"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    function toggleFields() {
+        const type = document.getElementById('banType').value;
+        document.getElementById('durationField').style.display = type === 'temporary' ? 'block' : 'none';
+        document.getElementById('eventField').style.display = type === 'event' ? 'block' : 'none';
+        if (type === 'temporary' && !document.getElementById('banEndsAt').value) {
+            openBanEndsAtModal();
+        }
+    }
+
+    function openBanEndsAtModal() {
+        document.getElementById('banEndsAtInput').value = document.getElementById('banEndsAt').value || '';
+        document.getElementById('banEndsAtOverlay').style.display = 'flex';
+    }
+
+    function closeBanEndsAtModal() {
+        document.getElementById('banEndsAtOverlay').style.display = 'none';
+    }
+
+    function confirmBanEndsAt() {
+        const val = document.getElementById('banEndsAtInput').value;
+        if (!val) return showToast('Please choose a date and time.', 'error');
+        document.getElementById('banEndsAt').value = val;
+        document.getElementById('banEndsAtSummary').textContent = 'Ends: ' + new Date(val).toLocaleString();
+        document.getElementById('banEndsAtSummary').style.color = '#10b981';
+        closeBanEndsAtModal();
+    }
+
+    async function loadUsers() {
+        try {
+            const { users } = await api.get('/admin/users');
+            document.getElementById('banUser').innerHTML = users
+                .filter(u => u.status === 'active')
+                .map(u => `<option value="${u.id}">${escapeHtml(u.full_name)} (@${escapeHtml(u.username)})</option>`).join('');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function submitRequest(e) {
+        e.preventDefault();
+        const userId = document.getElementById('banUser').value;
+        const banType = document.getElementById('banType').value;
+        const banEndsAt = document.getElementById('banEndsAt').value ? new Date(document.getElementById('banEndsAt').value).toISOString() : null;
+        const eventName = document.getElementById('banEventName').value.trim();
+        const reason = document.getElementById('banReason').value.trim();
+
+        try {
+            await api.post('/admin/ban-requests', { userId, banType, banEndsAt, eventName, reason });
+            document.getElementById('banForm').reset();
+            toggleFields();
+            showToast('Ban request submitted to Super Admin!', 'success');
+            loadRequests();
+        } catch (e2) { showToast(e2.message, 'error'); }
+    }
+
+    async function loadRequests() {
+        const list = document.getElementById('requestsList');
+        try {
+            const { requests } = await api.get('/admin/ban-requests');
+            list.innerHTML = requests.length ? requests.map(r => `
+                <div class="row">
+                    <div class="name">${escapeHtml(r.user_name)} <span style="color:var(--text-muted); font-weight:400;">@${escapeHtml(r.user_username)}</span></div>
+                    <div class="meta">${r.ban_type.toUpperCase()}${r.event_name ? ' — ' + escapeHtml(r.event_name) : ''}${r.ban_ends_at ? ' — until ' + new Date(r.ban_ends_at).toLocaleString() : ''}</div>
+                    <div class="meta">${escapeHtml(r.reason || '')}</div>
+                    <span class="status-tag tag-${r.status}">${r.status}</span>
+                </div>
+            `).join('') : `<div class="empty">No ban requests submitted yet.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', () => { loadUsers(); loadRequests(); });
+</script>
+</body>
+</html>

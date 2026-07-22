@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E - Codex Play | Admin Workspace Terminal</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #0b0f17; --bg-card: #131926; --accent-blue: #3b82f6;
+            --accent-green: #10b981; --accent-red: #ef4444; --text-main: #ffffff;
+            --text-muted: #94a3b8; --border-color: #1e293b; --role-color: var(--accent-blue);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 70px 15px 40px; display: flex; flex-direction: column; align-items: center; }
+        .balance-container { width: 100%; max-width: 1000px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .role-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 6px; margin-bottom: 15px; background: rgba(59, 130, 246, 0.15); color: var(--role-color); }
+        .header-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+        .header-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 30px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 35px; }
+        .summary-card { background: #0b0f17; border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
+        .summary-card label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .summary-card var { font-style: normal; font-size: 24px; font-weight: 700; color: var(--text-main); }
+        .summary-card i { position: absolute; right: 20px; bottom: 20px; font-size: 30px; opacity: 0.05; color: #fff; }
+        .section-title { font-size: 18px; font-weight: 600; margin-top: 30px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .table-responsive { width: 100%; overflow-x: auto; background: #0b0f17; border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 20px; max-height:520px; overflow-y:auto; }
+        .table-responsive thead { position: sticky; top: 0; z-index: 2; background: #0f172a; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th { background-color: rgba(30, 41, 59, 0.5); padding: 16px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); }
+        td { padding: 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
+        .user-tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+        .text-green { color: var(--accent-green); font-weight: 700; }
+        .form-box { background: #0b0f17; border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+        .form-group input, .form-group select { background: #131926; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; color: #fff; font-size: 14px; outline: none; }
+        .btn-submit { background: var(--role-color); color: #fff; font-weight: 600; border: none; padding: 11px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .logs-box { background: #0b0f17; border: 1px solid var(--border-color); border-radius: 16px; padding: 15px; max-height: 180px; overflow-y: auto; font-family: monospace; font-size: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .log-item { padding: 8px 12px; border-radius: 6px; background: rgba(30, 41, 59, 0.3); border-left: 4px solid var(--text-muted); }
+        .log-item.success { border-left-color: var(--accent-green); background: rgba(16, 185, 129, 0.05); }
+        .log-item.danger { border-left-color: var(--accent-red); background: rgba(239, 68, 68, 0.05); }
+        .log-item.pending { border-left-color: var(--accent-blue); background: rgba(59, 130, 246, 0.05); }
+        .empty-text { padding: 20px; text-align: center; color: var(--text-muted); font-style: italic; }
+
+        /* Custom Popup Modal Styles */
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition: opacity 0.3s ease; z-index:9999; }
+        .modal-overlay.active { opacity:1; pointer-events:all; }
+        .modal-box { background:var(--bg-card); border:1px solid var(--border-color); width:90%; max-width:400px; padding:25px; border-radius:16px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); transform:scale(0.8); transition: transform 0.3s ease; }
+        .modal-overlay.active .modal-box { transform:scale(1); }
+        .modal-icon { font-size: 40px; margin-bottom: 15px; color: var(--accent-blue); }
+        .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+        .modal-text { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
+        .modal-btn { background: var(--accent-blue); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; }
+        .unauthorized-card { text-align:center; padding: 40px; color:var(--text-muted); font-style:italic;}
+    .related-links-section { background: var(--bg-card, #131926); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; padding: 8px 20px; margin-bottom: 24px; }
+    .related-link-row { display: flex; align-items: center; gap: 14px; padding: 16px 4px; color: var(--accent-blue, #3b82f6); text-decoration: none; font-size: 15px; font-weight: 600; border-bottom: 1px solid var(--border-color, #1e293b); }
+    .related-link-row:last-child { border-bottom: none; }
+    .related-link-row i { width: 20px; text-align: center; font-size: 16px; }
+    </style>
+</head>
+<body>
+<a href="admin.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = "admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+
+    <div class="balance-container" id="mainTerminal">
+        <span class="role-badge">Admin Terminal</span>
+        <h1 class="header-title" id="terminalTitle">Workspace Ledger</h1>
+        <p class="header-subtitle">View client balances and manage deposit destinations. Direct balance editing is Super Admin only.</p>
+
+        <div class="related-links-section">
+            <a href="transaction_approval.html" class="related-link-row"><i class="fa-solid fa-file-circle-check"></i> Transaction Approval</a>
+        </div>
+
+        <div class="summary-grid" id="metricsGrid"></div>
+
+        <h2 class="section-title"><i class="fa-solid fa-qrcode"></i> Deposit Destinations (Where Users Send Payment)</h2>
+        <p style="font-size:13px; color:#94a3b8; margin-top:-10px; margin-bottom:15px;">
+            These are the GCash / Maya / Bank details that users will see before uploading proof of payment.
+        </p>
+        <div class="form-box">
+            <div class="form-group">
+                <label>Gateway (GCash / Maya / Bank)</label>
+                <input type="text" id="destGateway" placeholder="e.g. GCash">
+            </div>
+            <div class="form-group">
+                <label>Account Name</label>
+                <input type="text" id="destAccountName" placeholder="e.g. Juan Dela Cruz">
+            </div>
+            <div class="form-group">
+                <label>Account Number</label>
+                <input type="text" id="destAccountNumber" placeholder="e.g. 0912 345 6789">
+            </div>
+            <div class="form-group">
+                <label>QR Code Image (optional)</label>
+                <input type="file" id="destQr" accept="image/*">
+            </div>
+            <div class="form-group full-width">
+                <label>Instructions (optional)</label>
+                <input type="text" id="destInstructions" placeholder="e.g. Enter username as reference">
+            </div>
+            <div class="full-width">
+                <button type="button" class="btn-submit" onclick="saveDestination()">Add / Save Destination</button>
+            </div>
+        </div>
+        <div class="table-responsive" style="margin-bottom:35px;">
+            <table>
+                <thead><tr><th>Gateway</th><th>Account Name</th><th>Account #</th><th>Status</th><th style="text-align:center;">Actions</th></tr></thead>
+                <tbody id="destinationsBody"></tbody>
+            </table>
+        </div>
+
+        <h2 class="section-title"><i class="fa-solid fa-users"></i> Registered Active Client Ledger</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Account ID</th>
+                        <th>Name / Holder</th>
+                        <th>Access Role</th>
+                        <th>System User</th>
+                        <th>Available Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="directoryBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Custom Modal Structure -->
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-icon" id="modalIcon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="modal-title" id="modalTitle">Notification</div>
+            <div class="modal-text" id="modalText">Message details go here.</div>
+            <button class="modal-btn" onclick="closePopup()">Understood</button>
+        </div>
+    </div>
+
+    <script>
+        function showPopup(title, text, type = 'success') {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalText').innerText = text;
+            const iconElement = document.getElementById('modalIcon');
+            iconElement.innerHTML = type === 'danger'
+                ? '<i class="fa-solid fa-circle-xmark" style="color:var(--accent-red)"></i>'
+                : '<i class="fa-solid fa-circle-check" style="color:var(--accent-green)"></i>';
+            document.getElementById('customModal').classList.add('active');
+        }
+        function closePopup() { document.getElementById('customModal').classList.remove('active'); }
+        function formatPHP(val) { return "₱ " + parseFloat(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }); }
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        async function updateUI() {
+            try {
+                const dash = await api.get('/admin/dashboard');
+                const { users } = await api.get('/admin/users');
+                const totalUserFunds = users.reduce((s, a) => s + a.balance, 0);
+
+                document.getElementById('metricsGrid').innerHTML = `
+                    <div class="summary-card"><label>Total Client Wallets</label><var style="color:#10b981;">${formatPHP(totalUserFunds)}</var><i class="fa-solid fa-building-columns"></i></div>
+                    <div class="summary-card"><label>Awaiting My Review</label><var>${dash.pendingReview}</var><i class="fa-solid fa-clock"></i></div>
+                    <div class="summary-card"><label>Awaiting Super Admin</label><var>${dash.awaitingSuperAdmin}</var><i class="fa-solid fa-shield"></i></div>
+                `;
+
+                const tbody = document.getElementById('directoryBody');
+                tbody.innerHTML = users.length ? users.map(a => `
+                    <tr>
+                        <td style="font-family:monospace; color:#64748b;">USR-${a.id}</td>
+                        <td><b>${escapeHtml(a.full_name)}</b></td>
+                        <td><span class="user-tag tag-user">USER</span></td>
+                        <td style="color:#94a3b8;">@${escapeHtml(a.username)}</td>
+                        <td class="text-green">${formatPHP(a.balance)}</td>
+                    </tr>
+                `).join('') : `<tr><td colspan="5" class="empty-text">No active data streams discovered.</td></tr>`;
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function loadDestinations() {
+            const tbody = document.getElementById('destinationsBody');
+            try {
+                const { destinations } = await api.get('/shared/deposit-destinations');
+                tbody.innerHTML = destinations.length ? destinations.map(d => `
+                    <tr>
+                        <td><b>${escapeHtml(d.gateway_name)}</b></td>
+                        <td>${escapeHtml(d.account_name)}</td>
+                        <td style="font-family:monospace;">${escapeHtml(d.account_number)}</td>
+                        <td><span class="user-tag ${d.is_active ? 'tag-user' : ''}" style="${!d.is_active ? 'opacity:.5;' : ''}">${d.is_active ? 'ACTIVE' : 'HIDDEN'}</span></td>
+                        <td style="text-align:center; display:flex; gap:6px; justify-content:center;">
+                            <button class="btn-action" onclick="toggleDestination(${d.id}, ${d.is_active ? 0 : 1})">${d.is_active ? 'Hide' : 'Show'}</button>
+                            <button class="btn-action" style="background:#ef4444;" onclick="deleteDestination(${d.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('') : `<tr><td colspan="5" class="empty-text">No deposit destination has been set yet.</td></tr>`;
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function saveDestination() {
+            const gatewayName = document.getElementById('destGateway').value.trim();
+            const accountName = document.getElementById('destAccountName').value.trim();
+            const accountNumber = document.getElementById('destAccountNumber').value.trim();
+            const instructions = document.getElementById('destInstructions').value.trim();
+            const fileInput = document.getElementById('destQr');
+
+            if (!gatewayName || !accountName || !accountNumber) {
+                return showPopup("Missing Details", "Please complete the gateway, account name, and account number.", "danger");
+            }
+
+            const form = new FormData();
+            form.append('gatewayName', gatewayName);
+            form.append('accountName', accountName);
+            form.append('accountNumber', accountNumber);
+            form.append('instructions', instructions);
+            if (fileInput.files[0]) form.append('qrImage', fileInput.files[0]);
+
+            try {
+                await api.post('/shared/deposit-destinations', form, true);
+                showPopup("Saved", "New deposit destination added.");
+                document.getElementById('destGateway').value = '';
+                document.getElementById('destAccountName').value = '';
+                document.getElementById('destAccountNumber').value = '';
+                document.getElementById('destInstructions').value = '';
+                fileInput.value = '';
+                loadDestinations();
+            } catch (e) { showPopup("Error", e.message, "danger"); }
+        }
+
+        async function toggleDestination(id, newState) {
+            try {
+                const form = new FormData();
+                form.append('isActive', newState);
+                await api.patch(`/shared/deposit-destinations/${id}`, form, true);
+                loadDestinations();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function deleteDestination(id) {
+            try {
+                await api.del(`/shared/deposit-destinations/${id}`);
+                loadDestinations();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function loadRelatedDots() {
+            try {
+                const counts = await api.get('/shared/notification-counts');
+                addNotificationDot('transaction_approval.html', counts.transactions);
+            } catch (e) { /* non-fatal */ }
+        }
+        document.addEventListener('auth-ready', () => { updateUI(); loadDestinations(); loadRelatedDots(); });
+    </script>
+</body>
+</html>

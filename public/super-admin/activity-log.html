@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Activity Log</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:800px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .row{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:14px 18px;margin-bottom:10px;}
+  .row .top{display:flex;justify-content:space-between;align-items:center;}
+  .actor{font-weight:700;font-size:13px;}
+  .role-tag{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:5px;margin-left:6px;background:rgba(59,130,246,0.15);color:#3b82f6;}
+  .action{font-size:12px;color:#94a3b8;margin-top:4px;}
+  .time{font-size:11px;color:#64748b;}
+  .details{font-size:11px;color:#64748b;margin-top:6px;font-family:monospace;background:#0b0f17;padding:8px;border-radius:8px;overflow-x:auto;}
+  .empty{color:var(--text-muted);font-size:13px;font-style:italic;padding:30px;text-align:center;background:var(--bg-card);border:1px dashed var(--border-color);border-radius:16px;}
+#logList{max-height:520px; overflow-y:auto;}
+</style>
+</head>
+<body>
+<a href="super_admin.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>Activity Log</h1>
+    <p class="sub">Every important action taken by Admins and Super Admins, including settings changes, so nothing happens without visibility.</p>
+    <div id="logList"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    function describeAction(action) {
+        const map = {
+            update_admin_settings: 'updated their Admin Settings',
+            update_user_settings: 'updated their personal Settings',
+            create_admin: 'created a new Admin account',
+            set_admin_status: 'changed an Admin\'s status',
+            delete_admin: 'deleted an Admin account',
+            adjust_balance: 'adjusted a user\'s balance',
+            set_user_status: 'changed a user\'s status',
+            finalize_deposit: 'finalized a deposit',
+            finalize_withdrawal: 'finalized a withdrawal',
+            approve_ticket: 'approved a ticket',
+            reject_ticket: 'rejected a ticket',
+            approve_ban_request: 'approved a ban request',
+            approve_winner: 'approved a winner',
+            set_system_status: 'changed the system status',
+            generate_otp: 'generated an OTP code',
+        };
+        return map[action] || action.replace(/_/g, ' ');
+    }
+
+    async function loadLog() {
+        const list = document.getElementById('logList');
+        try {
+            const { log } = await api.get('/superadmin/activity-log');
+            list.innerHTML = log.length ? log.map(l => `
+                <div class="row">
+                    <div class="top">
+                        <div>
+                            <span class="actor">${escapeHtml(l.actor_name || 'Unknown')}</span>
+                            <span class="role-tag">${escapeHtml(l.actor_role || '')}</span>
+                        </div>
+                        <span class="time">${new Date(l.created_at).toLocaleString()}</span>
+                    </div>
+                    <div class="action">${describeAction(l.action)}${l.target ? ' — ' + escapeHtml(l.target) : ''}</div>
+                    ${l.details ? `<div class="details">${escapeHtml(l.details)}</div>` : ''}
+                </div>
+            `).join('') : `<div class="empty">No activity recorded yet.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', loadLog);
+</script>
+</body>
+</html>

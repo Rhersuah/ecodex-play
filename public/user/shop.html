@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Shop | Special Tickets & Products</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #060913; --bg-card: #0b111e; --accent-blue: #3b82f6;
+            --accent-green: #10b981; --accent-purple: #8b5cf6; --accent-gold: #f59e0b;
+            --text-main: #ffffff; --text-muted: #94a3b8; --border-color: #1f2937;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 70px 15px 40px; display: flex; flex-direction: column; align-items: center; }
+        
+        .shop-container { width: 100%; max-width: 1200px; background-color: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; padding: 30px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); }
+        
+        .shop-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 35px; flex-wrap: wrap; gap: 15px; }
+        .cart-status-box { background: #060913; border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: all 0.3s ease; }
+        .cart-status-box:hover { border-color: var(--accent-purple); box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); }
+        .cart-icon-wrapper { position: relative; font-size: 20px; color: var(--accent-gold); }
+        .cart-count { position: absolute; top: -8px; right: -10px; background: var(--accent-purple); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 50%; box-shadow: 0 0 8px var(--accent-purple); }
+
+        .role-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 6px; margin-bottom: 10px; background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); border: 1px solid rgba(245, 158, 11, 0.3); letter-spacing: 1px; }
+        .header-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; background: linear-gradient(to right, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-subtitle { font-size: 14px; color: var(--text-muted); }
+
+        .inventory-section { margin-bottom: 40px; }
+        .section-headline { font-size: 18px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        
+        .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        #goldTierTicketsDirectory { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+        @media (max-width: 480px) {
+            .catalog-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+        }
+        
+        /* SHINING EFFECTS & PREMIUM CARDS */
+        .item-card { background: #060913; border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
+        
+        /* Shimmer overlay effect */
+        .item-card::before { content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.08), transparent); transform: skewX(-25deg); transition: 0.75s; z-index: 5; pointer-events: none; }
+        .item-card:hover::before { left: 150%; }
+
+        /* Premium Glow on Hovers */
+        .item-card.gold-card:hover { transform: translateY(-5px); border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 10px 25px rgba(245, 158, 11, 0.15); }
+        .item-card.premium-card:hover { transform: translateY(-5px); border-color: rgba(139, 92, 246, 0.5); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.15); }
+        
+        .item-img-frame { width: 100%; height: 140px; background: #0b111e; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid var(--border-color); position: relative; }
+        
+        /* Icon Glow Effects */
+        .gold-card .item-fallback-icon { font-size: 36px; color: rgba(245, 158, 11, 0.2); text-shadow: 0 0 15px rgba(245, 158, 11, 0.4); animation: pulseGlowGold 3s infinite alternate; }
+        .premium-card .item-fallback-icon { font-size: 36px; color: rgba(139, 92, 246, 0.2); text-shadow: 0 0 15px rgba(139, 92, 246, 0.4); animation: pulseGlowPremium 3s infinite alternate; }
+        
+        @keyframes pulseGlowGold { 0% { color: rgba(245, 158, 11, 0.15); text-shadow: 0 0 5px rgba(245, 158, 11, 0.2); } 100% { color: rgba(245, 158, 11, 0.4); text-shadow: 0 0 20px rgba(245, 158, 11, 0.6); } }
+        @keyframes pulseGlowPremium { 0% { color: rgba(139, 92, 246, 0.15); text-shadow: 0 0 5px rgba(139, 92, 246, 0.2); } 100% { color: rgba(139, 92, 246, 0.4); text-shadow: 0 0 20px rgba(139, 92, 246, 0.6); } }
+
+        .ticket-code-tag { position: absolute; top: 10px; left: 10px; background: rgba(6, 9, 19, 0.85); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.5px; backdrop-filter: blur(4px); }
+        
+        /* Tier badges with dynamic animation */
+        .tier-badge { position: absolute; top: 10px; right: 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; z-index: 6; }
+        .tier-badge.gold-tier { background: linear-gradient(135deg, #f59e0b, #9a6503); color: #fff; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+        .tier-badge.premium-tier { background: linear-gradient(135deg, #8b5cf6, #5b21b6); color: #fff; box-shadow: 0 0 10px rgba(139, 92, 246, 0.4); }
+
+        .item-details { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .item-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: #fff; letter-spacing: 0.3px; }
+        .item-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 34px; }
+        
+        /* Premium Animated Price Tag */
+        .price-tag { font-size: 19px; font-weight: 700; color: #fff; margin-bottom: 10px; display: inline-block; background: linear-gradient(90deg, #10b981, #34d399, #10b981); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shinePrice 3s linear infinite; }
+        @keyframes shinePrice { to { background-position: 200% center; } }
+
+        .item-timestamp { font-size: 10px; color: #4b5563; margin-bottom: 12px; border-top: 1px dashed #1f2937; padding-top: 8px; display: flex; align-items: center; gap: 4px; }
+        
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-action { font-weight: 700; border: none; padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .btn-cart { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .btn-cart:hover { background: var(--accent-blue); color: #fff; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+        
+        .gold-card .btn-buy { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 800; }
+        .gold-card .btn-buy:hover { box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+        
+        .premium-card .btn-buy { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; }
+        .premium-card .btn-buy:hover { box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
+
+        /* MODAL STYLING */
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(3, 5, 10, 0.9); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition: all 0.3s ease; z-index:9999; backdrop-filter: blur(6px); }
+        .modal-overlay.active { opacity:1; pointer-events:all; }
+        .modal-box { background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); width:90%; max-width:440px; padding:30px; border-radius:20px; text-align:center; transform: scale(0.9); transition: all 0.3s ease; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        
+        .success-icon { font-size: 50px; color: var(--accent-green); margin-bottom: 15px; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        .receipt-details { background: #060913; border-radius: 12px; padding: 18px; text-align: left; margin: 15px 0; font-size: 14px; border: 1px dashed var(--border-color); }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-muted); }
+        .receipt-row strong { color: #fff; }
+        .receipt-row:last-child { margin-bottom: 0; padding-top: 10px; border-top: 1px solid var(--border-color); font-weight: 700; color: var(--accent-green); font-size: 16px; }
+        
+        .modal-btn { background: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 5px; transition: all 0.2s; }
+        .modal-btn:hover { opacity: 0.9; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+        .cart-item-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+        .cart-item-line:last-child { border-bottom: none; }
+    .related-links-section { background: var(--bg-card, #131926); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; padding: 8px 20px; margin-bottom: 24px; }
+    .related-link-row { display: flex; align-items: center; gap: 14px; padding: 16px 4px; color: var(--accent-gold, #eab308); text-decoration: none; font-size: 15px; font-weight: 600; border-bottom: 1px solid var(--border-color, #1e293b); }
+    .related-link-row:last-child { border-bottom: none; }
+    .related-link-row i { width: 20px; text-align: center; font-size: 16px; }
+    </style>
+</head>
+<body>
+<audio id="bgAudio" loop style="display:none;"></audio>
+<a href="user.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = ["user", "admin", "super_admin"];</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+
+    <div class="shop-container">
+        <div class="shop-header">
+            <div>
+                <span class="role-badge">E-Codex Shop</span>
+                <h1 class="header-title">In-Game Shop</h1>
+                <p class="header-subtitle">Purchase using your wallet balance.</p>
+            </div>
+            
+            <div class="cart-status-box" onclick="openCartModal()">
+                <div class="cart-icon-wrapper">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-count" id="cartBadgeCount">0</span>
+                </div>
+                <div style="text-align: left;">
+                    <div style="font-size: 11px; color: var(--text-muted);">Cart Total</div>
+                    <div style="font-size: 13px; font-weight: 600; color: var(--accent-green);" id="cartBadgePrice">₱0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="related-links-section">
+            <a href="buy_tickets.html" class="related-link-row"><i class="fa-solid fa-ticket"></i> Buy Tickets</a>
+            <a href="my_orders.html" class="related-link-row"><i class="fa-solid fa-box"></i> My Orders</a>
+            <a href="auction.html" class="related-link-row"><i class="fa-solid fa-gavel"></i> Auction</a>
+        </div>
+
+        <div class="inventory-section">
+            <h3 class="section-headline"><i class="fa-solid fa-store" style="color: var(--accent-gold)"></i> Available Items</h3>
+            <div class="catalog-grid" id="goldTicketsDirectory" style="max-height:600px; overflow-y:auto; padding-right:4px;"></div>
+        </div>
+
+        <div class="inventory-section">
+            <h3 class="section-headline"><i class="fa-solid fa-crown" style="color: #eab308"></i> High Value Tickets</h3>
+            <div class="catalog-grid" id="goldTierTicketsDirectory" style="max-height:520px; overflow-y:auto; padding-right:4px;"></div>
+        </div>
+    </div>
+
+    <!-- MODALS SECTION -->
+    <div class="modal-overlay" id="itemDetailModal">
+        <div class="modal-box" style="text-align:left;">
+            <div id="itemDetailImg" style="width:100%; height:200px; border-radius:12px; overflow:hidden; margin-bottom:14px; background:#0b111e; display:flex; align-items:center; justify-content:center;"></div>
+            <h3 id="itemDetailName" style="text-align:center;">Item Name</h3>
+            <div style="text-align:center; font-size:22px; font-weight:800; color:var(--accent-green); margin:10px 0;" id="itemDetailPrice"></div>
+            <p style="color: var(--text-muted); font-size:13px; line-height:1.6; margin-bottom:16px;" id="itemDetailDesc"></p>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-action btn-cart" style="flex:1;" id="itemDetailAddBtn">Add to Cart</button>
+                <button class="btn-action btn-buy" style="flex:1;" id="itemDetailBuyBtn">Buy</button>
+            </div>
+            <button class="modal-btn" onclick="closeModal('itemDetailModal')" style="margin-top:8px;">Close</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="purchaseModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-circle-check success-icon"></i>
+            <h3 id="receiptHeadline">Order Placed Successfully!</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;">Your secure transaction record has been generated.</p>
+            
+            <div class="receipt-details">
+                <div class="receipt-row"><span>Pass Token:</span> <strong id="recName">-</strong></div>
+                <div class="receipt-row"><span>Order Reference:</span> <span id="recId" style="font-family:monospace; color: var(--accent-blue);">-</span></div>
+                <div class="receipt-row"><span>Gateway Status:</span> <strong style="color:var(--accent-green)">Processing / Paid</strong></div>
+                <div class="receipt-row"><span>Total Settlement:</span> <span id="recPrice">₱0.00</span></div>
+            </div>
+
+            <button class="modal-btn" onclick="closeModal('purchaseModal')">Dismiss Receipt</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="cartModal">
+        <div class="modal-box" style="text-align: left;">
+            <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-cart-flat-bed" style="color: var(--accent-purple)"></i> Selection Basket
+            </h3>
+            <div id="cartItemsContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;"></div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-bottom: 15px;">
+                <span>Total Amount:</span>
+                <span id="cartTotalSum" style="color: var(--accent-green);">₱0.00</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="modal-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); margin-top:0;" onclick="clearCart()">Clear</button>
+                <button class="modal-btn" style="background: var(--accent-gold); color: #090d16; margin-top:0; font-weight: 700;" onclick="checkoutCart()">Complete Order</button>
+            </div>
+            <button class="modal-btn" style="background: none; text-align: center; color: var(--text-muted); font-size: 12px; text-decoration: underline;" onclick="closeModal('cartModal')">Continue Shopping</button>
+        </div>
+    </div>
+
+    <script>
+        let currentCart = []; // [{id, name, price, qty}]
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        function generateProductIcon(name) {
+            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444', '#06b6d4'];
+            const letter = (name || '?').trim().charAt(0).toUpperCase() || '?';
+            let hash = 0;
+            for (let i = 0; i < (name || '').length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+            const color = colors[hash % colors.length];
+            return `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:${color}22; color:${color}; font-size:32px; font-weight:800;">${escapeHtml(letter)}</div>`;
+        }
+
+        let shopItemsCache = [];
+
+        function openItemDetail(id) {
+            const item = shopItemsCache.find(t => t.id === id);
+            if (!item) return;
+            document.getElementById('itemDetailImg').innerHTML = item.image
+                ? `<img src="${item.image}" style="width:100%; height:100%; object-fit:contain;">`
+                : generateProductIcon(item.name);
+            document.getElementById('itemDetailName').textContent = item.name;
+            document.getElementById('itemDetailPrice').textContent = `₱${parseFloat(item.price).toFixed(2)}`;
+            document.getElementById('itemDetailDesc').textContent = item.description || 'No additional details.';
+            document.getElementById('itemDetailAddBtn').onclick = () => {
+                addItemToCart(item.id, item.name, item.price, item.description);
+                closeModal('itemDetailModal');
+            };
+            document.getElementById('itemDetailBuyBtn').onclick = () => {
+                closeModal('itemDetailModal');
+                directItemPurchase(item.id, item.name, item.price);
+            };
+            document.getElementById('itemDetailModal').classList.add('active');
+        }
+
+        async function renderShop() {
+            const container = document.getElementById('goldTicketsDirectory');
+            try {
+                const { items } = await api.get('/user/shop-items');
+                if (items.length === 0) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1/-1; color: var(--text-muted); padding: 30px; font-style: italic; font-size: 12px; text-align: center; background: #060913; border-radius: 12px; border: 1px dashed var(--border-color);">
+                            No items available in the shop yet.
+                        </div>`;
+                    return;
+                }
+                shopItemsCache = items;
+                container.innerHTML = items.map(t => `
+                    <div class="item-card gold-card" onclick="openItemDetail(${t.id})">
+                        <div class="item-img-frame">
+                            <span class="ticket-code-tag">STOCK: ${t.stock}</span>
+                            ${t.discount_percent ? `<span style="position:absolute; top:8px; left:8px; background:#ef4444; color:#fff; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px; z-index:2;">-${t.discount_percent}%</span>` : ''}
+                            ${t.image ? `<img src="${t.image}" style="width:100%;height:100%;object-fit:contain;">` : generateProductIcon(t.name)}
+                        </div>
+                        <div class="item-details">
+                            <div>
+                                <div class="item-name">${escapeHtml(t.name)}</div>
+                                <div class="item-desc" title="${escapeHtml(t.description || '')}">${escapeHtml(t.description || 'No additional details.')}</div>
+                            </div>
+                            <div>
+                                <div class="price-tag">${t.discount_percent ? `<span style="text-decoration:line-through; color:#64748b; font-size:12px; margin-right:6px;">₱${parseFloat(t.price).toFixed(2)}</span>₱${(t.price * (1 - t.discount_percent / 100)).toFixed(2)}` : `₱${parseFloat(t.price).toFixed(2)}`}</div>
+                                <div class="action-grid">
+                                    <button class="btn-action btn-cart" onclick="event.stopPropagation(); addItemToCart(${t.id}, '${escapeHtml(t.name)}', ${t.price}, '${escapeHtml((t.description||'').replace(/'/g, "\\'"))}')">
+                                        <i class="fa-solid fa-cart-plus"></i> + Cart
+                                    </button>
+                                    <button class="btn-action btn-buy" onclick="event.stopPropagation(); directItemPurchase(${t.id}, '${escapeHtml(t.name)}', ${t.price})">
+                                        <i class="fa-solid fa-bag-shopping"></i> Buy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).reverse().join('');
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        function addItemToCart(id, name, price, description) {
+            if (isStaffPreview) return showToast('You are viewing as staff — only real users can add items to cart.', 'error');
+            const existing = currentCart.find(i => i.id === id);
+            if (existing) existing.qty += 1;
+            else currentCart.push({ id, name, price, qty: 1, description: description || '' });
+            updateCartDisplay();
+            showToast(`Added to cart: ${name}`, 'success');
+        }
+
+        function directItemPurchase(id, name, price) {
+            if (isStaffPreview) return showToast('You are viewing as staff — only real users can buy items.', 'error');
+            sessionStorage.setItem('pendingOrder', JSON.stringify({ itemId: id, name, qty: 1, total: price }));
+            window.location.href = 'order-form.html';
+        }
+
+        function updateCartDisplay() {
+            document.getElementById('cartBadgeCount').innerText = currentCart.reduce((s, i) => s + i.qty, 0);
+            const total = currentCart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            document.getElementById('cartBadgePrice').innerText = pesos(total);
+        }
+
+        function openCartModal() {
+            const container = document.getElementById('cartItemsContainer');
+            const totalSumLabel = document.getElementById('cartTotalSum');
+
+            if (currentCart.length === 0) {
+                container.innerHTML = `<div style="color: var(--text-muted); font-size:13px; font-style:italic; padding:10px 0;">Your cart is empty.</div>`;
+                totalSumLabel.innerText = "₱0.00";
+            } else {
+                container.innerHTML = currentCart.map(item => `
+                    <div class="cart-item-line" style="flex-direction:column; align-items:flex-start; gap:2px;">
+                        <div style="display:flex; justify-content:space-between; width:100%;">
+                            <span style="color:#fff; font-weight:500;">${escapeHtml(item.name)} x${item.qty}</span>
+                            <span style="color:var(--accent-green); font-weight:600;">₱${(item.price * item.qty).toFixed(2)}</span>
+                        </div>
+                        ${item.description ? `<span style="font-size:11px; color:var(--text-muted);">${escapeHtml(item.description)}</span>` : ''}
+                    </div>
+                `).join('');
+                const total = currentCart.reduce((sum, item) => sum + item.price * item.qty, 0);
+                totalSumLabel.innerText = pesos(total);
+            }
+            document.getElementById('cartModal').classList.add('active');
+        }
+
+        function checkoutCart() {
+            if (currentCart.length === 0) return;
+            const items = currentCart.map(item => ({
+                itemId: item.id, name: item.name, qty: item.qty, total: item.price * item.qty,
+            }));
+            sessionStorage.setItem('pendingOrder', JSON.stringify(items));
+            window.location.href = 'order-form.html';
+        }
+
+        function clearCart() {
+            currentCart = [];
+            updateCartDisplay();
+            openCartModal();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        let isStaffPreview = false;
+        document.addEventListener('auth-ready', (e) => {
+            isStaffPreview = e.detail.role === 'admin' || e.detail.role === 'super_admin';
+            renderShop();
+        });
+
+
+        async function renderGoldTickets() {
+            const container = document.getElementById('goldTierTicketsDirectory');
+            try {
+                const { tickets } = await api.get('/user/tickets/shop-gold');
+                container.innerHTML = tickets.length ? tickets.map(t => `
+                    <div class="item-card gold-card" style="padding:10px;">
+                        ${ticketCardHTML(t)}
+                        <button class="btn-action btn-buy" style="width:100%; margin-top:10px;" onclick="buyGoldTicket(${t.id}, '${escapeHtml(t.ticket_code)}', ${t.price})">
+                            <i class="fa-solid fa-bolt"></i> Buy
+                        </button>
+                    </div>
+                `).join('') : `<div style="grid-column:1/-1; color:var(--text-muted); padding:20px; font-style:italic; font-size:12px; text-align:center;">No high value tickets available right now.</div>`;
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function buyGoldTicket(id, code, price) {
+            if (isStaffPreview) return showToast('You are viewing as staff — only real users can buy tickets.', 'error');
+            try {
+                await api.post(`/user/tickets/shop/${id}/buy`, {});
+                document.getElementById('receiptHeadline').innerText = "Ticket Purchased!";
+                document.getElementById('recName').innerText = code;
+                document.getElementById('recId').innerText = code;
+                document.getElementById('recPrice').innerText = pesos(price);
+                document.getElementById('purchaseModal').classList.add('active');
+                renderGoldTickets();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        document.addEventListener('auth-ready', () => { renderGoldTickets(); setInterval(renderGoldTickets, 8000); });
+
+        async function loadShopBackgroundAudio() {
+            try {
+                const { deployments } = await api.get('/shared/audio-deployments');
+                if (deployments.shop && deployments.shop.file_url) {
+                    const audioEl = document.getElementById('bgAudio');
+                    audioEl.src = deployments.shop.file_url;
+                    audioEl.volume = 0.5;
+                    const tryPlay = () => audioEl.play().catch(() => {});
+                    tryPlay();
+                    // Most browsers block autoplay with sound until the user
+                    // has interacted with the page at least once — this
+                    // makes sure the music actually starts on their first tap/click.
+                    ['click', 'touchstart', 'keydown'].forEach(evt => {
+                        document.addEventListener(evt, tryPlay, { once: true });
+                    });
+                }
+            } catch (e) { /* non-fatal */ }
+        }
+        document.addEventListener('auth-ready', loadShopBackgroundAudio);
+    </script>
+</body>
+</html>

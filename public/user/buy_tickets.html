@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Hub | Available Passes</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #0b0f17; --bg-card: #131926; --accent-blue: #3b82f6;
+            --accent-green: #10b981; --accent-orange: #f59e0b;
+            --text-main: #ffffff; --text-muted: #94a3b8; --border-color: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 70px 15px 40px; display: flex; flex-direction: column; align-items: center; }
+        
+        .shop-container { width: 100%; max-width: 1200px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
+        
+        .shop-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        .cart-status-box { background: #0b0f17; border: 1px solid var(--border-color); padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px; cursor: pointer; }
+        .cart-icon-wrapper { position: relative; font-size: 20px; color: var(--accent-orange); }
+        .cart-count { position: absolute; top: -8px; right: -10px; background: var(--accent-blue); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 50%; }
+
+        .role-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 6px; margin-bottom: 10px; background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .header-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+        .header-subtitle { font-size: 14px; color: var(--text-muted); }
+
+        .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 15px; }
+        .ticket-card { background: #0b0f17; border: 1px solid var(--border-color); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; position: relative; transition: transform 0.2s, border-color 0.2s; }
+        .ticket-card:hover { transform: translateY(-2px); border-color: #374151; }
+        
+        .ticket-img-frame { width: 100%; height: 110px; background: #131926; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid var(--border-color); position: relative; }
+        .ticket-fallback-icon { font-size: 32px; color: #1e293b; }
+        .ticket-code-badge { position: absolute; top: 10px; left: 10px; background: rgba(11, 15, 23, 0.9); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+        
+        .ticket-details { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .ticket-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: #fff; }
+        .ticket-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 34px; }
+        
+        .price-tag { font-size: 18px; font-weight: 700; color: var(--accent-green); margin-bottom: 8px; }
+        .ticket-timestamp { font-size: 10px; color: #475569; margin-bottom: 12px; border-top: 1px dashed #1e293b; padding-top: 8px; display: flex; align-items: center; gap: 4px; }
+        
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-action { font-weight: 600; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: opacity 0.2s; text-transform: uppercase; }
+        .btn-action:hover { opacity: 0.9; }
+        .btn-cart { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .btn-buy { background: var(--accent-orange); color: #131926; font-weight: 700; }
+
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition: opacity 0.2s ease; z-index:9999; }
+        .modal-overlay.active { opacity:1; pointer-events:all; }
+        .modal-box { background:var(--bg-card); border:1px solid var(--border-color); width:90%; max-width:440px; padding:25px; border-radius:20px; text-align:center; }
+        
+        .success-icon { font-size: 45px; color: var(--accent-green); margin-bottom: 15px; }
+        .receipt-details { background: #0b0f17; border-radius: 10px; padding: 15px; text-align: left; margin: 15px 0; font-size: 14px; border: 1px dashed var(--border-color); }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-muted); }
+        .receipt-row strong { color: #fff; }
+        .receipt-row:last-child { margin-bottom: 0; padding-top: 10px; border-top: 1px solid var(--border-color); font-weight: 700; color: var(--accent-green); font-size: 16px; }
+        
+        .modal-btn { background: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 5px; }
+        
+        .cart-item-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+        .cart-item-line:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+<a href="shop.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Shop">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+
+    <div class="shop-container">
+        <div class="shop-header">
+            <div>
+                <span class="role-badge">Ticket Marketplace</span>
+                <h1 class="header-title">Available Raffle Draws</h1>
+                <p class="header-subtitle">Buy a ticket for open draws. You'll automatically get a random ticket number.</p>
+            </div>
+            <div class="cart-status-box" style="cursor:default;">
+                <div class="cart-icon-wrapper"><i class="fa-solid fa-wallet"></i></div>
+                <div style="text-align: left;">
+                    <div style="font-size: 11px; color: var(--text-muted);">My Balance</div>
+                    <div style="font-size: 13px; font-weight: 600;" id="myBalanceDisplay">₱0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="catalog-grid" id="ticketShowcaseDirectory"></div>
+
+        <h2 style="font-size:16px; margin:30px 0 14px;"><i class="fa-solid fa-ticket" style="color:#eab308;"></i> Available Tickets (ECP)</h2>
+        <div class="catalog-grid" id="ecpTicketShop" style="max-height:600px; overflow-y:auto; padding-right:4px;"></div>
+    </div>
+
+    <div class="modal-overlay" id="purchaseModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-circle-check success-icon"></i>
+            <h3 id="receiptHeadline">Ticket Issued Successfully!</h3>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 5px;">I-check sa "My Tickets" the full list of your tickets.</p>
+            
+            <div class="receipt-details">
+                <div class="receipt-row"><span>Draw:</span> <strong id="recName">-</strong></div>
+                <div class="receipt-row"><span>Ticket Number:</span> <span id="recId" style="font-family:monospace; color: var(--accent-blue);">-</span></div>
+                <div class="receipt-row"><span>Status:</span> <strong style="color:var(--accent-green)">Confirmed</strong></div>
+                <div class="receipt-row"><span>Price:</span> <span id="recPrice">₱0.00</span></div>
+            </div>
+
+            <button class="modal-btn" onclick="closeModal('purchaseModal')">Confirm & Close</button>
+        </div>
+    </div>
+
+    <script>
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        async function loadBalance() {
+            try {
+                const { balance } = await api.get('/user/balance');
+                document.getElementById('myBalanceDisplay').textContent = pesos(balance);
+            } catch (e) { /* non-fatal */ }
+        }
+
+        async function renderTicketMarketplace() {
+            const directory = document.getElementById('ticketShowcaseDirectory');
+            try {
+                const { draws } = await api.get('/user/draws');
+                const openDraws = draws.filter(d => d.status === 'open');
+
+                if (openDraws.length === 0) {
+                    directory.innerHTML = `
+                        <div style="grid-column: 1/-1; color: var(--text-muted); padding: 50px; font-style: italic; font-size: 14px; text-align: center; background: #0b0f17; border-radius: 16px; border: 1px dashed var(--border-color);">
+                            <i class="fa-solid fa-ticket-simple" style="font-size: 24px; margin-bottom: 10px; display: block; color: var(--border-color);"></i>
+                            No open draws right now.
+                        </div>`;
+                    return;
+                }
+
+                directory.innerHTML = openDraws.map(d => `
+                    <div class="ticket-card">
+                        <div class="ticket-img-frame">
+                            <span class="ticket-code-badge">DRAW-${d.id}</span>
+                            <i class="fa-solid fa-ticket ticket-fallback-icon"></i>
+                        </div>
+                        <div class="ticket-details">
+                            <div>
+                                <div class="ticket-name">${escapeHtml(d.name)}</div>
+                                <div class="ticket-desc">Draw date: ${new Date(d.draw_date).toLocaleString()}</div>
+                            </div>
+                            <div>
+                                <div class="price-tag">₱${parseFloat(d.ticket_price).toFixed(2)}</div>
+                                <div class="action-grid" style="grid-template-columns:1fr;">
+                                    <button class="btn-action btn-buy" onclick="buyTicket(${d.id}, '${escapeHtml(d.name)}', ${d.ticket_price})">
+                                        <i class="fa-solid fa-bolt"></i> Buy Ticket
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).reverse().join('');
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        function randomTicketNumber() {
+            return String(Math.floor(100000 + Math.random() * 900000));
+        }
+
+        async function buyTicket(drawId, drawName, price) {
+            if (isStaffPreview) return showToast('You are viewing as staff — only real users can buy tickets.', 'error');
+            let attempts = 0;
+            while (attempts < 5) {
+                const ticketNumber = randomTicketNumber();
+                try {
+                    await api.post('/user/tickets/buy', { drawId, ticketNumber });
+                    document.getElementById('receiptHeadline').innerText = "Ticket Issued Successfully!";
+                    document.getElementById('recName').innerText = drawName;
+                    document.getElementById('recId').innerText = ticketNumber;
+                    document.getElementById('recPrice').innerText = pesos(price);
+                    document.getElementById('purchaseModal').classList.add('active');
+                    loadBalance();
+                    return;
+                } catch (e) {
+                    if (e.status === 409) { attempts++; continue; } // number taken, retry
+                    showToast(e.message, 'error');
+                    return;
+                }
+            }
+            showToast('Please try again — random numbers are running out.', 'error');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+
+        async function loadEcpShop() {
+            const container = document.getElementById('ecpTicketShop');
+            try {
+                const { tickets } = await api.get('/user/tickets/shop');
+                if (!tickets.length) {
+                    container.innerHTML = `<div style="grid-column:1/-1; color:var(--text-muted); padding:24px; font-style:italic; font-size:13px; text-align:center; background:#0b0f17; border-radius:12px; border:1px dashed var(--border-color);">No ECP tickets available right now.</div>`;
+                    return;
+                }
+                container.innerHTML = tickets.map(t => `
+                    <div class="ticket-card" style="padding:10px;">
+                        ${ticketCardHTML(t)}
+                        <button class="btn-action btn-buy" style="width:100%; margin-top:10px;" onclick="buyEcpTicket(${t.id}, '${escapeHtml(t.ticket_code)}', ${t.price})">
+                            <i class="fa-solid fa-bolt"></i> Buy
+                        </button>
+                    </div>
+                `).join('');
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function buyEcpTicket(id, code, price) {
+            if (isStaffPreview) return showToast('You are viewing as staff — only real users can buy tickets.', 'error');
+            try {
+                await api.post(`/user/tickets/shop/${id}/buy`, {});
+                document.getElementById('receiptHeadline').innerText = "Ticket Issued Successfully!";
+                document.getElementById('recName').innerText = code;
+                document.getElementById('recId').innerText = code;
+                document.getElementById('recPrice').innerText = pesos(price);
+                document.getElementById('purchaseModal').classList.add('active');
+                loadEcpShop();
+                loadBalance();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        let isStaffPreview = false;
+        document.addEventListener('auth-ready', (e) => {
+            isStaffPreview = e.detail.role === 'admin' || e.detail.role === 'super_admin';
+            renderTicketMarketplace();
+            loadBalance();
+            loadEcpShop();
+            setInterval(loadEcpShop, 8000);
+        });
+    </script>
+</body>
+</html>

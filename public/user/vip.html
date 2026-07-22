@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | VIP Status</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:70px 20px 40px;}
+  .wrap{max-width:680px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:20px;}
+  .current-vip-banner{background:linear-gradient(135deg,#2d1b4e,#4a2c7a,#6b3fa0); border:1px solid #c9a636; border-radius:16px; padding:20px; margin-bottom:24px; text-align:center; box-shadow:0 0 25px rgba(168,85,247,0.3);}
+  .current-vip-banner .label{font-size:11px; color:#e9c968; text-transform:uppercase; letter-spacing:1px;}
+  .current-vip-banner .value{font-size:32px; font-weight:900; color:#fff; margin:6px 0;}
+  .current-vip-banner .sub{font-size:12px; color:#e9d5ff;}
+  .tier-list{display:flex; flex-direction:column; gap:10px;}
+  .tier-row{display:flex; align-items:center; gap:16px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:16px 18px;}
+  .tier-row.owned{border-color:#10b981; background:rgba(16,185,129,0.05);}
+  .tier-row.next{border-color:#e9c968; box-shadow:0 0 14px rgba(233,201,104,0.2);}
+  .tier-roman{width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#4a2c7a,#6b3fa0); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:18px; color:#e9c968; flex-shrink:0; border:2px solid #c9a636;}
+  .tier-info{flex:1;}
+  .tier-info .name{font-weight:700; font-size:14px;}
+  .tier-info .price{font-size:12px; color:var(--text-muted);}
+  .tier-btn{padding:9px 16px; border:none; border-radius:8px; background:#10b981; color:#fff; font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap;}
+  .tier-btn:disabled{background:#334155; color:#64748b; cursor:not-allowed;}
+  .progress-bar-bg{background:#0b0f17; border-radius:6px; height:6px; margin-top:8px; overflow:hidden;}
+  .progress-bar-fill{background:linear-gradient(90deg,#10b981,#34d399); height:100%; border-radius:6px; transition:width 0.4s;}
+</style>
+</head>
+<body>
+<a href="account.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Account">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+<div class="wrap">
+    <h1><i class="fa-solid fa-crown"></i> VIP Status</h1>
+    <p class="sub">Earn Points by playing — buying tickets, shopping, and bidding in Auctions earn the most. Depositing earns a little too. Points add up automatically and unlock higher VIP tiers — you never spend them or buy a tier directly.</p>
+
+    <div class="current-vip-banner">
+        <div class="label">Your Current Status</div>
+        <div class="value" id="currentVipLabel">—</div>
+        <div class="sub" id="progressLabel"></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%;"></div></div>
+    </div>
+
+    <div class="tier-list" id="tierList"></div>
+</div>
+
+<script>
+    let vipData = null;
+
+    async function loadVip() {
+        try {
+            vipData = await api.get('/user/vip-status');
+            renderBanner();
+            renderTiers();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function renderBanner() {
+        document.getElementById('currentVipLabel').textContent = vipData.vipTier > 0 ? `VIP ${vipData.vipRoman}` : 'Not a VIP yet';
+        if (vipData.nextTier) {
+            const pct = Math.min(100, (vipData.totalPoints / vipData.nextTier.pointsRequired) * 100);
+            document.getElementById('progressLabel').textContent = `${vipData.totalPoints.toFixed(0)} / ${vipData.nextTier.pointsRequired.toLocaleString()} Points toward VIP ${vipData.nextTier.roman}`;
+            document.getElementById('progressFill').style.width = pct + '%';
+        } else {
+            document.getElementById('progressLabel').textContent = 'You\'ve reached the highest VIP tier!';
+            document.getElementById('progressFill').style.width = '100%';
+        }
+    }
+
+    function renderTiers() {
+        document.getElementById('tierList').innerHTML = vipData.allTiers.map(t => {
+            const owned = vipData.vipTier >= t.tier;
+            const isNext = !owned && vipData.vipTier === t.tier - 1;
+            return `
+                <div class="tier-row ${owned ? 'owned' : ''} ${isNext ? 'next' : ''}">
+                    <div class="tier-roman">${t.roman}</div>
+                    <div class="tier-info">
+                        <div class="name">VIP ${t.roman}</div>
+                        <div class="price">${t.pointsRequired.toLocaleString()} Points</div>
+                    </div>
+                    ${owned
+                        ? '<span style="color:#10b981; font-size:12px; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Reached</span>'
+                        : `<span style="color:var(--text-muted); font-size:11px;">${(t.pointsRequired - vipData.totalPoints).toFixed(0)} points to go</span>`
+                    }
+                </div>
+            `;
+        }).join('');
+    }
+
+    document.addEventListener('auth-ready', loadVip);
+</script>
+</body>
+</html>

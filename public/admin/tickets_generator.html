@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - Bulk Ticket Creator</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-main: #04060f; --bg-card: #0b0f19; --accent-blue: #2563eb; --border-color: #1e293b; --text-main: #ffffff; --text-muted: #64748b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 70px 20px 40px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 22px; font-weight: 800; }
+        .badge-role { background: rgba(37,99,235,0.1); color: #60a5fa; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; border: 1px solid rgba(37,99,235,0.2); }
+        .workspace { display: grid; grid-template-columns: 400px 1fr; gap: 30px; }
+        .panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; height: fit-content; }
+        .panel h2 { font-size: 14px; font-weight: 700; margin-bottom: 20px; color: #94a3b8; text-transform: uppercase; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; }
+        .form-control { width: 100%; background: #04060f; border: 1px solid var(--border-color); padding: 14px; border-radius: 10px; color: #fff; font-size: 13px; outline: none; resize: none; }
+        .form-control:focus { border-color: var(--accent-blue); }
+        select.form-control { cursor: pointer; }
+        select.form-control option { background: #0b0f19; color: #fff; }
+        .btn-submit { width: 100%; background: var(--accent-blue); color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: 700; font-size: 13px; text-transform: uppercase; cursor: pointer; }
+        .m-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        .m-table th { color: #94a3b8; font-weight: 600; font-size: 11px; padding: 14px; border-bottom: 2px solid var(--border-color); background: #070a13; text-transform: uppercase; }
+        .m-table td { padding: 14px; border-bottom: 1px solid var(--border-color); }
+        .row-code { font-family: 'Cinzel', serif; font-weight: 700; color: #fff; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; display: inline-block; }
+        .status-pending { background: rgba(234, 179, 8, 0.1); color: #eab308; }
+        .status-approved { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .status-instant { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+        #toastBox { position: fixed; bottom: 20px; right: 20px; background: #2563eb; color: #fff; padding: 15px 25px; border-radius: 10px; font-weight: 600; font-size: 13px; transform: translateY(100px); opacity: 0; transition: all 0.4s; z-index: 9999; }
+        #toastBox.show { transform: translateY(0); opacity: 1; }
+        .premium-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 6px;
+            box-shadow: 0 0 6px rgba(167, 139, 250, 0.7), 0 0 14px rgba(124, 58, 237, 0.4);
+            animation: premiumGlow 2.2s ease-in-out infinite;
+        }
+        @keyframes premiumGlow {
+            0%, 100% { box-shadow: 0 0 6px rgba(167, 139, 250, 0.6), 0 0 14px rgba(124, 58, 237, 0.35); }
+            50% { box-shadow: 0 0 10px rgba(167, 139, 250, 0.95), 0 0 22px rgba(124, 58, 237, 0.6); }
+        }
+    </style>
+</head>
+<body>
+<a href="draw-settings.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Draw Management">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = "admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+    <div class="container">
+        <header class="header">
+            <div>
+                <h1>Ticket Creation Engine</h1>
+                <p style="font-size: 12px; color: var(--text-muted);">Select quantity, badge tier, and input description details for Super Admin Review</p>
+            </div>
+            <div class="badge-role"><i class="fa-solid fa-user"></i> Admin</div>
+        </header>
+
+        <div class="workspace">
+            <section class="panel">
+                <h2>Generate Bulk Tickets</h2>
+                <form id="ticketForm" onsubmit="submitToReview(event)">
+                    <div class="form-group">
+                        <label>How many to generate? (Max 500)</label>
+                        <input type="number" id="tQuantity" class="form-control" min="1" max="500" value="10" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ticket Tier</label>
+                        <select id="tTier" class="form-control">
+                            <option value="normal">Normal Tier</option>
+                            <option value="gold">Gold Tier</option>
+                            <option value="premium">Premium Tier</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Price per Ticket (₱)</label>
+                        <input type="number" id="tPrice" class="form-control" placeholder="e.g. 50" required min="0" step="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Custom QR Code Image (optional)</label>
+                        <input type="file" id="tQrImage" class="form-control" accept="image/*">
+                        <small style="color:#64748b; font-size:11px;">If left blank, a QR code will be auto-generated from the ticket code.</small>
+                    </div>
+                    <button type="submit" class="btn-submit"><i class="fa-solid fa-layer-group"></i> Generate & Send for Approval</button>
+                </form>
+            </section>
+
+            <section class="panel" style="width:100%;">
+                <h2>My Generated Tickets</h2>
+                <div style="max-height:480px; overflow-y:auto; border:1px solid var(--border-color); border-radius:10px;">
+                    <table class="m-table">
+                        <thead style="position:sticky; top:0; z-index:2;">
+                            <tr>
+                                <th>Ticket Code</th>
+                                <th>Tier</th>
+                                <th>Price</th>
+                                <th>Created At</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminLedger"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="toastBox"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg"></span></div>
+
+    <script>
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        async function submitToReview(e) {
+            e.preventDefault();
+            const quantity = document.getElementById('tQuantity').value;
+            const tier = document.getElementById('tTier').value;
+            const price = document.getElementById('tPrice').value;
+            const qrFile = document.getElementById('tQrImage').files[0];
+
+            if (!quantity || !price) return showToast('Please fill in quantity and price.');
+
+            const form = new FormData();
+            form.append('quantity', quantity);
+            form.append('tier', tier);
+            form.append('price', price);
+            if (qrFile) form.append('qrImage', qrFile);
+
+            try {
+                const data = await api.post('/admin/tickets/generate', form, true);
+                document.getElementById('ticketForm').reset();
+                document.getElementById('tQuantity').value = 10;
+                showToast(`Generated ${data.created.length} ticket(s)! Waiting for Super Admin approval.`);
+                renderAdminView();
+            } catch (e2) { showToast(e2.message); }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastBox');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        async function deployTicket(id) {
+            const destination = await appChoice(
+                'Where should this ticket be deployed?',
+                [
+                    { label: 'Buy Tickets', value: 'buy_tickets', color: '#10b981' },
+                    { label: 'Shop', value: 'shop', color: '#3b82f6' },
+                    { label: 'Auction', value: 'auction', color: '#f59e0b' },
+                ]
+            );
+            if (!destination) return;
+            try {
+                await api.post(`/admin/tickets/${id}/deploy`, { destination });
+                showToast(`Ticket deployed to ${destination === 'buy_tickets' ? 'Buy Tickets' : destination === 'shop' ? 'Shop' : 'Auction'}!`);
+                renderAdminView();
+            } catch (e) { showToast(e.message); }
+        }
+
+        async function renderAdminView() {
+            const body = document.getElementById('adminLedger');
+            try {
+                const { tickets } = await api.get('/admin/tickets');
+                body.innerHTML = tickets.length ? tickets.map(t => {
+                    const statusClass = {
+                        pending_approval: 'status-pending',
+                        approved: 'status-approved',
+                        deployed: 'status-instant',
+                        sold: 'status-approved',
+                        rejected: 'status-pending',
+                    }[t.status] || 'status-pending';
+                    return `
+                    <tr>
+                        <td>
+                            <span class="row-code">${escapeHtml(t.ticket_code)}</span>
+                            ${t.tier === 'gold' ? '<span style="background:#eab308; color:#000; font-size:9px; font-weight:800; padding:2px 6px; border-radius:4px; margin-left:6px;">GOLD</span>' : ''}
+                            ${t.tier === 'premium' ? '<span class="premium-badge">PREMIUM</span>' : ''}
+                        </td>
+                        <td style="text-transform:capitalize;">${t.tier}</td>
+                        <td><strong style="color: #10b981;">₱${parseFloat(t.price).toFixed(2)}</strong></td>
+                        <td style="color:#94a3b8; font-size:11px;">${new Date(t.created_at).toLocaleString()}</td>
+                        <td><span class="status-badge ${statusClass}">${t.status.replace('_',' ').toUpperCase()}</span></td>
+                        <td>${t.status === 'approved' ? `<button class="btn-submit" style="padding:6px 12px; width:auto; font-size:11px;" onclick="deployTicket(${t.id})">Deploy</button>` : t.deploy_destination ? `<span style="color:#10b981; font-size:11px;"><i class="fa-solid fa-location-arrow"></i> ${t.deploy_destination === 'buy_tickets' ? 'Buy Tickets' : t.deploy_destination === 'shop' ? 'Shop' : 'Auction'}</span>` : (t.owner_name ? `Owned by ${escapeHtml(t.owner_name)}` : '—')}</td>
+                    </tr>
+                `;
+                }).join('') : `<tr><td colspan="6" style="text-align:center; color:#64748b; padding:20px;">No tickets generated yet.</td></tr>`;
+            } catch (e) { showToast(e.message); }
+        }
+
+        document.addEventListener('auth-ready', renderAdminView);
+    </script>
+</body>
+</html>

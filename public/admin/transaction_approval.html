@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel | Level 1 Admin Verification</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #0b0f19; --bg-card: #151b2c; --accent-blue: #3b82f6;
+            --accent-green: #10b981; --accent-orange: #f59e0b; --accent-red: #ef4444;
+            --text-main: #ffffff; --text-muted: #64748b; --border-color: #222c44;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 70px 20px 40px; }
+        
+        .header-container { max-width: 1200px; margin: 0 auto 30px auto; display: flex; justify-content: space-between; align-items: center; }
+        .portal-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 5px 14px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .portal-title { font-size: 26px; font-weight: 700; margin-top: 5px; letter-spacing: -0.5px; }
+
+        .dashboard-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 35px; }
+        
+        .section-panel { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 25px; box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+        
+        .empty-state { color: var(--text-muted); font-size: 14px; font-style: italic; text-align: center; padding: 40px 0; }
+
+        /* Data Tables */
+        .table-responsive { width: 100%; overflow-x: auto; max-height:520px; overflow-y:auto; }
+        .table-responsive thead { position: sticky; top: 0; z-index: 2; background: #0f172a; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        .data-table th { color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 2px solid var(--border-color); }
+        .data-table td { padding: 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        
+        .user-info { font-weight: 600; color: #fff; }
+        .user-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        
+        .amount-display { font-family: monospace; font-size: 15px; font-weight: 700; }
+        .amount-deposit { color: var(--accent-green); }
+        .amount-withdraw { color: var(--accent-red); }
+
+        .badge { font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; display: inline-block; }
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge-admin-ok { background: rgba(5b, 130, 246, 0.1); color: var(--accent-blue); border: 1px solid rgba(5b, 130, 246, 0.2); }
+        .badge-approved { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .badge-rejected { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        .document-thumbnail { width: 55px; height: 55px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s; }
+        .document-thumbnail:hover { transform: scale(1.05); }
+        .no-doc-text { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+        .btn-action-container { display: flex; gap: 8px; }
+        .btn-act { border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 5px; color: #fff; }
+        .btn-approve { background: var(--accent-green); }
+        .btn-reject { background: var(--accent-red); }
+        .btn-act:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+<a href="fundmanagement.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Fund Management">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = "admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+
+    <div class="header-container">
+        <div>
+            <span class="portal-badge">Verification Queue</span>
+            <h1 class="portal-title">Level 1 Admin Approval Portal</h1>
+        </div>
+        <div style="text-align: right; font-size: 12px; color: var(--text-muted);">
+            System Access Tier: <span style="color: var(--accent-blue); font-weight:700;">ADMINISTRATOR</span>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        
+        <div class="section-panel">
+            <h2 class="section-title"><i class="fa-solid fa-cloud-arrow-down" style="color:var(--accent-blue);"></i> User Deposit Pipeline</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>User Details</th>
+                            <th>Platform</th>
+                            <th>Amount</th>
+                            <th>Uploaded Proof</th>
+                            <th>Current Status</th>
+                            <th>Action Controls</th>
+                        </tr>
+                    </thead>
+                    <tbody id="depositTableBody">
+                        </tbody>
+                </table>
+                <div id="depositEmpty" class="empty-state">No pending deposit requests in this sector.</div>
+            </div>
+        </div>
+
+        <div class="section-panel">
+            <h2 class="section-title"><i class="fa-solid fa-hand-holding-dollar" style="color:var(--accent-orange);"></i> User Withdrawal Settlements</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Recipient Account Details</th>
+                            <th>Target Platform</th>
+                            <th>Amount</th>
+                            <th>Status Matrix</th>
+                            <th>Action Controls</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawTableBody">
+                        </tbody>
+                </table>
+                <div id="withdrawEmpty" class="empty-state">No pending operational withdrawal claims.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        async function initializeAdminReviewEngine() {
+            try {
+                const { pending } = await api.get('/admin/transactions/pending');
+                renderDeposits(pending.filter(i => i.txType === 'deposit'));
+                renderWithdrawals(pending.filter(i => i.txType === 'withdrawal'));
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        function renderDeposits(items) {
+            const tbody = document.getElementById('depositTableBody');
+            const emptyState = document.getElementById('depositEmpty');
+
+            if (items.length === 0) { tbody.innerHTML = ""; emptyState.style.display = "block"; return; }
+            emptyState.style.display = "none";
+
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td style="font-family:monospace; font-weight:600; color:#3b82f6;">${item.display_id || item.id.slice(0, 8)}</td>
+                    <td>
+                        <div class="user-info">${escapeHtml(item.user ? item.user.full_name : 'Unknown')}</div>
+                        <div class="user-meta"><i class="fa-solid fa-phone"></i> ${escapeHtml(item.user ? item.user.mobile || '' : '')}</div>
+                    </td>
+                    <td><span style="font-weight:500;">${escapeHtml(item.gateway)}</span></td>
+                    <td><span class="amount-display amount-deposit">₱${parseFloat(item.amount).toFixed(2)}</span></td>
+                    <td>
+                        ${item.proof_image ? `<img src="${item.proof_image}" class="document-thumbnail" onclick="window.open(this.src)" title="Expand User Documentation File">` : '<span class="no-doc-text">No File</span>'}
+                    </td>
+                    <td><span class="badge badge-pending">Waiting For Admin</span></td>
+                    <td>
+                        <div class="btn-action-container">
+                            <button class="btn-act btn-approve" onclick="updateStatus('deposit', '${item.id}', 'admin_approved')"><i class="fa-solid fa-circle-check"></i> Forward</button>
+                            <button class="btn-act btn-reject" onclick="updateStatus('deposit', '${item.id}', 'rejected')"><i class="fa-solid fa-ban"></i> Terminate</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderWithdrawals(items) {
+            const tbody = document.getElementById('withdrawTableBody');
+            const emptyState = document.getElementById('withdrawEmpty');
+
+            if (items.length === 0) { tbody.innerHTML = ""; emptyState.style.display = "block"; return; }
+            emptyState.style.display = "none";
+
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td style="font-family:monospace; font-weight:600; color:#f59e0b;">${item.display_id || item.id.slice(0, 8)}</td>
+                    <td>
+                        <div class="user-info">${escapeHtml(item.user ? item.user.full_name : 'Unknown')}</div>
+                        <div class="user-meta"><i class="fa-solid fa-wallet"></i> Account: ${escapeHtml(item.account_number || '')}</div>
+                    </td>
+                    <td><span style="font-weight:500;">${escapeHtml(item.gateway)}</span></td>
+                    <td><span class="amount-display amount-withdraw">₱${parseFloat(item.amount).toFixed(2)}</span></td>
+                    <td><span class="badge badge-pending">Waiting For Admin</span></td>
+                    <td>
+                        <div class="btn-action-container">
+                            <button class="btn-act btn-approve" onclick="updateStatus('withdrawal', '${item.id}', 'admin_approved')"><i class="fa-solid fa-circle-check"></i> Forward</button>
+                            <button class="btn-act btn-reject" onclick="updateStatus('withdrawal', '${item.id}', 'rejected')"><i class="fa-solid fa-ban"></i> Terminate</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function updateStatus(type, id, decision) {
+            try {
+                await api.post(`/admin/transactions/${type}/${id}/review`, { decision });
+                showToast(decision === 'admin_approved' ? 'Na-forward sa Super Admin.' : 'Transaction rejected.', 'success');
+                initializeAdminReviewEngine();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        document.addEventListener('auth-ready', () => {
+            initializeAdminReviewEngine();
+            setInterval(initializeAdminReviewEngine, 15000);
+        });
+    </script>
+</body>
+</html>

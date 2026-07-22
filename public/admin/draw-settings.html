@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Draw Management</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;--accent-pink:#ec4899;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:720px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:22px;}
+  .card h2{font-size:14px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:16px;}
+  label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:6px;}
+  input{width:100%;background:#0b0f17;border:1px solid var(--border-color);border-radius:10px;padding:12px;color:#fff;font-size:14px;margin-bottom:16px;text-overflow:ellipsis;}
+  input[type="datetime-local"]{font-size:13px;padding:10px 8px;max-width:100%;}
+  .btn{width:100%;padding:13px;border:none;border-radius:10px;background:var(--accent-pink);color:#fff;font-weight:700;font-size:13px;cursor:pointer;}
+  .engine-option{background:#0b0f17;border:2px solid var(--border-color);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px;}
+  .engine-option.selected{border-color:var(--accent-pink);background:rgba(236,72,153,0.08);}
+  .engine-option i{font-size:22px;color:var(--accent-pink);}
+  .engine-option .name{font-weight:700;font-size:14px;}
+  .engine-option .desc{font-size:11px;color:var(--text-muted);}
+  .status-line{font-size:12px;color:var(--text-muted);margin-top:10px;}
+  .related-links-section { background: var(--bg-card, #131926); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; padding: 8px 20px; margin-bottom: 24px; }
+  .related-link-row { display: flex; align-items: center; gap: 14px; padding: 16px 4px; color: var(--accent-blue, #3b82f6); text-decoration: none; font-size: 15px; font-weight: 600; border-bottom: 1px solid var(--border-color, #1e293b); }
+  .related-link-row:last-child { border-bottom: none; }
+  .related-link-row i { width: 20px; text-align: center; font-size: 16px; }
+</style>
+</head>
+<body>
+<a href="admin.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = ["admin", "super_admin"];</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>Live Draw Management</h1>
+    <p class="sub">Set the auto-draw schedule and choose which visual engine users see on their Live Draw screen. Changes here reflect immediately. <a href="live-draw-monitor.html" style="color:#ec4899;">Watch the Live Draw Monitor &rarr;</a></p>
+
+    <div class="related-links-section">
+        <a href="tickets_generator.html" class="related-link-row"><i class="fa-solid fa-ticket-simple"></i> Ticket Generator</a>
+        <a href="winner-verification.html" class="related-link-row"><i class="fa-solid fa-user-shield"></i> Winner Verification</a>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2><i class="fa-solid fa-clock"></i> Draw Trigger Scheduler</h2>
+            <label>Target Date & Time for Auto-Draw</label>
+            <input type="datetime-local" id="targetDatetime">
+
+            <label>Number of Winners to Pick</label>
+            <input type="number" id="winnerCount" min="1" value="1" placeholder="e.g. 3">
+            <p style="font-size:11px; color:#64748b; margin-top:-10px; margin-bottom:14px;">How many tickets win when this draw resolves. Each winner gets its own reveal spin on the wheel, one after another.</p>
+
+            <button class="btn" onclick="saveSchedule()"><i class="fa-solid fa-bolt"></i> Save Schedule</button>
+            <div class="status-line" id="scheduleStatus"></div>
+            <div id="verifyPendingNote" style="display:none; margin-top:14px; font-size:12px; color:#f59e0b;"><i class="fa-solid fa-triangle-exclamation"></i> Awaiting Super Admin verification before users can drop tickets into the pool.</div>
+            <div id="verifiedBadge" style="display:none; margin-top:14px; font-size:12px; color:#10b981;"><i class="fa-solid fa-circle-check"></i> Schedule verified — locked. Only Super Admin can Force Cancel to make changes.</div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-dice"></i> Live Draw Visual Engine</h2>
+            <div class="engine-option" id="engine-wheel" onclick="selectEngine('wheel')">
+                <i class="fa-solid fa-record-vinyl"></i>
+                <div><div class="name">Wheel of Fortune</div><div class="desc">Classic spinning circular selector</div></div>
+            </div>
+            <div class="engine-option" id="engine-tambiolo" onclick="selectEngine('tambiolo')">
+                <i class="fa-solid fa-circle-dot"></i>
+                <div><div class="name">Tambiolo Sphere</div><div class="desc">Air-blown cage ball lottery mechanism</div></div>
+            </div>
+            <div class="engine-option" id="engine-dice" onclick="selectEngine('dice')">
+                <i class="fa-solid fa-dice-six"></i>
+                <div><div class="name">Cyber Dice Grid</div><div class="desc">Digital randomized grid drop</div></div>
+            </div>
+            <div class="engine-option" id="engine-cards" onclick="selectEngine('cards')">
+                <i class="fa-solid fa-layer-group"></i>
+                <div><div class="name">Laser Card Deck</div><div class="desc">High-speed shuffled deck selector</div></div>
+            </div>
+            <div class="status-line" id="engineStatus"></div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2><i class="fa-solid fa-dice"></i> Live Draw Pool — Predetermine & Execute</h2>
+        <p style="font-size:12px; color:#64748b; margin-bottom:14px;">Optionally set which dropped ticket wins before the draw runs. Leave blank for a genuinely random, fair draw from the pool.</p>
+
+        <label>Predetermined Winning Ticket (optional)</label>
+        <input type="text" id="predetermineCode" placeholder="e.g. ECP-1234 (must be in the pool)">
+        <button class="btn" style="background:#3b82f6; margin-bottom:16px;" onclick="submitPredetermine()"><i class="fa-solid fa-crosshairs"></i> Set Predetermined Winner</button>
+        <div id="predetermineStatus" class="status-line"></div>
+        <p style="font-size:11px; color:#64748b;">The draw resolves automatically once the countdown reaches zero — no manual step needed. It uses this predetermined ticket if set and approved, otherwise a fair random pick.</p>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2><i class="fa-solid fa-trophy"></i> Draw Results — Set Winners</h2>
+        <label>Select Draw to Close</label>
+        <select id="drawSelect" onchange="onDrawSelected()"></select>
+
+        <div id="winnerFormArea" style="display:none;">
+            <label>🥇 1st Place Ticket Number (Gold)</label>
+            <input type="text" id="winner1st" placeholder="e.g. ECP-1234 or ticket number">
+
+            <label>🥈 2nd Place Ticket Number (Silver) — optional</label>
+            <input type="text" id="winner2nd" placeholder="Optional">
+
+            <label>🥉 3rd Place Ticket Number (Bronze) — optional</label>
+            <input type="text" id="winner3rd" placeholder="Optional">
+
+            <label>Additional Winners (optional, one per line)</label>
+            <textarea id="winnerAdditional" rows="3" placeholder="One ticket number per line" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:12px; color:#fff; font-size:14px; margin-bottom:16px;"></textarea>
+
+            <button class="btn" onclick="closeDrawWithWinners()"><i class="fa-solid fa-flag-checkered"></i> Close Draw & Announce Winners</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedEngine = 'wheel';
+
+    function selectEngine(engine) {
+        selectedEngine = engine;
+        ['wheel','tambiolo','dice','cards'].forEach(e => {
+            document.getElementById('engine-' + e).classList.toggle('selected', e === engine);
+        });
+        saveEngine();
+    }
+
+    async function loadSettings() {
+        try {
+            const data = await api.get('/shared/draw-settings');
+            selectedEngine = data.active_engine;
+            selectEngineVisualOnly(data.active_engine);
+            if (data.target_datetime) document.getElementById('targetDatetime').value = data.target_datetime.slice(0, 16);
+            document.getElementById('winnerCount').value = data.winner_count || 1;
+            document.getElementById('scheduleStatus').textContent = data.target_datetime
+                ? `Currently scheduled for ${new Date(data.target_datetime).toLocaleString()}`
+                : 'No auto-draw currently scheduled.';
+
+            const pendingNote = document.getElementById('verifyPendingNote');
+            const verifiedBadge = document.getElementById('verifiedBadge');
+            const isLocked = !!data.schedule_verified_by;
+
+            document.getElementById('targetDatetime').disabled = isLocked;
+            document.getElementById('winnerCount').disabled = isLocked;
+            document.querySelectorAll('.engine-option').forEach(el => {
+                el.style.pointerEvents = isLocked ? 'none' : 'auto';
+                el.style.opacity = isLocked ? '0.6' : '1';
+            });
+
+            if (!data.target_datetime) {
+                pendingNote.style.display = 'none';
+                verifiedBadge.style.display = 'none';
+            } else if (isLocked) {
+                pendingNote.style.display = 'none';
+                verifiedBadge.style.display = 'block';
+            } else {
+                pendingNote.style.display = 'block';
+                verifiedBadge.style.display = 'none';
+            }
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function selectEngineVisualOnly(engine) {
+        ['wheel','tambiolo','dice','cards'].forEach(e => {
+            document.getElementById('engine-' + e).classList.toggle('selected', e === engine);
+        });
+    }
+
+    async function saveEngine() {
+        try {
+            await api.patch('/shared/draw-settings', { activeEngine: selectedEngine });
+            showToast('Live Draw engine updated!', 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function saveSchedule() {
+        const targetDatetime = document.getElementById('targetDatetime').value;
+        const winnerCount = document.getElementById('winnerCount').value;
+        try {
+            await api.patch('/shared/draw-settings', {
+                targetDatetime: targetDatetime || null,
+                winnerCount: winnerCount ? Number(winnerCount) : 1,
+            });
+            showToast('Schedule saved!', 'success');
+            loadSettings();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    let openDraws = [];
+    let poolDraw = null;
+
+    async function submitPredetermine() {
+        const code = document.getElementById('predetermineCode').value.trim();
+        if (!code) return showToast('Please enter a ticket code.', 'error');
+        if (!poolDraw) return showToast('No open pool draw right now.', 'error');
+        try {
+            const data = await api.post(`/admin/draws/${poolDraw.id}/predetermine`, { ticketCode: code });
+            showToast(data.message, 'success');
+            document.getElementById('predetermineStatus').textContent = data.message;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadOpenDraws() {
+        try {
+            const { draws } = await api.get('/admin/draws');
+            openDraws = draws.filter(d => d.status === 'open');
+            poolDraw = openDraws.find(d => d.is_pool_draw) || null;
+            const select = document.getElementById('drawSelect');
+            select.innerHTML = '<option value="">-- Select a draw --</option>' +
+                openDraws.map(d => `<option value="${d.id}">${escapeHtml(d.name)} (${new Date(d.draw_date).toLocaleDateString()})</option>`).join('');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    function onDrawSelected() {
+        const id = document.getElementById('drawSelect').value;
+        document.getElementById('winnerFormArea').style.display = id ? 'block' : 'none';
+    }
+
+    async function closeDrawWithWinners() {
+        const drawId = document.getElementById('drawSelect').value;
+        const winner1st = document.getElementById('winner1st').value.trim();
+        const winner2nd = document.getElementById('winner2nd').value.trim();
+        const winner3rd = document.getElementById('winner3rd').value.trim();
+        const additional = document.getElementById('winnerAdditional').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+        if (!drawId) return showToast('Please select a draw first.', 'error');
+        if (!winner1st) return showToast('1st place ticket number is required.', 'error');
+
+        if (!(await appConfirm('Close this draw and announce winners? This cannot be undone.', 'Close Draw'))) return;
+
+        try {
+            await api.patch(`/admin/draws/${drawId}`, {
+                status: 'completed',
+                winningNumber: winner1st,
+                winningNumber2nd: winner2nd || null,
+                winningNumber3rd: winner3rd || null,
+                additionalWinners: additional,
+            });
+            showToast('Draw closed and winners announced!', 'success');
+            document.getElementById('winnerFormArea').style.display = 'none';
+            document.getElementById('drawSelect').value = '';
+            loadOpenDraws();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadRelatedDots() {
+        try {
+            const counts = await api.get('/shared/notification-counts');
+            addNotificationDot('winner-verification.html', counts.winners);
+        } catch (e) { /* non-fatal */ }
+    }
+    document.addEventListener('auth-ready', () => { loadSettings(); loadOpenDraws(); loadRelatedDots(); });
+</script>
+</body>
+</html>

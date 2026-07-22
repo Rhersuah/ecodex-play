@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Portal | Withdraw Funds</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #070a13; --bg-card: #0f1524; --accent-blue: #3b82f6;
+            --accent-green: #10b981; --accent-orange: #f59e0b; --accent-red: #ef4444;
+            --text-main: #ffffff; --text-muted: #64748b; --border-color: #1e293b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 70px 15px 40px; display: flex; flex-direction: column; align-items: center; }
+        
+        .portal-container { width: 100%; max-width: 1100px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; }
+        @media (max-width: 850px) { .portal-container { grid-template-columns: 1fr; } }
+
+        .card-panel { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        
+        .role-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 5px 14px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.2); margin-bottom: 15px; }
+        .panel-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.5px; }
+        .panel-subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 25px; }
+
+        .balance-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--border-color); padding: 20px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .balance-amount { font-size: 32px; font-weight: 700; color: var(--accent-green); margin-top: 5px; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-control { width: 100%; background: #070a13; border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 10px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .form-control:focus { border-color: var(--accent-blue); }
+        
+        .radio-selectors { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .radio-label { border: 1px solid var(--border-color); background: #070a13; padding: 14px; border-radius: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .radio-label input { accent-color: var(--accent-blue); }
+
+        .btn-submit { width: 100%; background: var(--accent-red); color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-submit:hover { opacity: 0.9; }
+        .btn-submit:disabled { background: #1e293b; color: #64748b; cursor: not-allowed; opacity: 1; }
+
+        .error-message { font-size: 12px; color: var(--accent-red); margin-top: 5px; display: none; font-weight: 500; }
+
+        .history-list { display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto; }
+        .history-item { background: #070a13; border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .tx-meta { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .tx-status { font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .status-approved { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .status-rejected { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.2); }
+    </style>
+</head>
+<body>
+<a href="balance.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Balance">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+
+    <div class="portal-container">
+        
+        <!-- Left Panel: Withdrawal Request Form -->
+        <div class="card-panel">
+            <span class="role-badge">Secure Offboarding</span>
+            <h2 class="panel-title">Withdraw Funds Form</h2>
+            <p class="panel-subtitle">Please input your correct receiving details. The administration team will verify and process your settlement upon review.</p>
+            
+            <form id="withdrawalRequestForm" onsubmit="processWithdrawalRequest(event)">
+                <div class="form-group">
+                    <label>Select Receiving Platform:</label>
+                    <div class="radio-selectors">
+                        <label class="radio-label">
+                            <input type="radio" name="withdrawalGateway" value="GCash" onchange="toggleAccountFieldLabel('Mobile Number')" required> GCash Gateway
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="withdrawalGateway" value="BPI" onchange="toggleAccountFieldLabel('Account Number')" required> BPI Network
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Recipient Full Name</label>
+                    <input type="text" id="recipientName" class="form-control" placeholder="E.g. John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label id="accountLabel">Account / Mobile Number</label>
+                    <input type="text" id="recipientAccount" class="form-control" placeholder="Enter target bank details or number" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Withdrawal Amount (PHP)</label>
+                    <input type="number" id="withdrawAmount" class="form-control" placeholder="₱0.00" min="1" step="any" oninput="validateLiveBalance()" required>
+                    <div id="balanceError" class="error-message"><i class="fa-solid fa-triangle-exclamation"></i> Insufficient wallet balance.</div>
+                </div>
+
+                <div id="feeNotice" style="background:#0b0f17; border:1px solid #1e293b; border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:12px; color:#94a3b8; display:none;">
+                    <i class="fa-solid fa-circle-info" style="color:#f59e0b;"></i>
+                    A <strong id="feePercentLabel" style="color:#f59e0b;">0%</strong> platform service fee applies to withdrawals. This helps cover system maintenance, domain, and security costs.
+                </div>
+                <label style="display:flex; align-items:flex-start; gap:10px; font-size:12px; color:#94a3b8; margin-bottom:16px; cursor:pointer;">
+                    <input type="checkbox" id="agreeFeeCheckbox" style="margin-top:2px; width:16px; height:16px; flex-shrink:0;" required>
+                    <span>I understand and agree to the fees</span>
+                </label>
+
+                <button type="submit" id="submitWithdrawalBtn" class="btn-submit">
+                    <i class="fa-solid fa-paper-plane"></i> Submit Request For Review
+                </button>
+            </form>
+        </div>
+
+        <!-- Right Panel: Balance View & Active Withdraw Tracker -->
+        <div class="card-panel" style="display: flex; flex-direction: column;">
+            <span class="role-badge" style="background:rgba(59,130,246,0.1); color:var(--accent-blue); border-color:rgba(59,130,246,0.2);">Account Assets</span>
+            <h2 class="panel-title">My Wallet Balance</h2>
+            <p class="panel-subtitle">Current available balance. Approved withdrawals will automatically deduct from this fund stack.</p>
+            
+            <div class="balance-card">
+                <div>
+                    <div style="font-size:12px; color:#94a3b8; text-transform:uppercase;">Available Funds</div>
+                    <div class="balance-amount" id="userWalletBalance">₱0.00</div>
+                </div>
+                <i class="fa-solid fa-wallet" style="font-size:36px; color:#1e293b;"></i>
+            </div>
+
+            <h3 style="font-size:15px; font-weight:600; margin-bottom:15px; color:#fff;">Withdrawal Settlement History</h3>
+            <div class="history-list" id="withdrawHistoryContainer"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let globalApprovedBalance = 0;
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        async function calculateAndLoadWallet() {
+            try {
+                const [{ balance }, { transactions }] = await Promise.all([
+                    api.get('/user/balance'),
+                    api.get('/user/transactions'),
+                ]);
+                globalApprovedBalance = balance;
+                document.getElementById('userWalletBalance').textContent = pesos(balance);
+                validateLiveBalance();
+
+                const withdrawHistory = transactions.filter(t => t.txType === 'withdrawal');
+                const historyContainer = document.getElementById('withdrawHistoryContainer');
+                if (withdrawHistory.length === 0) {
+                    historyContainer.innerHTML = `<div style="color:var(--text-muted); font-size:13px; font-style:italic; padding:15px; text-align:center;">No withdrawal records found.</div>`;
+                    return;
+                }
+
+                historyContainer.innerHTML = withdrawHistory.map(req => {
+                    let statusBadgeClass = 'status-pending';
+                    if (req.status === 'approved') statusBadgeClass = 'status-approved';
+                    if (req.status === 'rejected') statusBadgeClass = 'status-rejected';
+                    const needsOtp = !req.otp_verified && ['pending', 'admin_approved'].includes(req.status);
+                    return `
+                        <div class="history-item" style="flex-direction:column; align-items:stretch;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-weight:600; font-size:14px; color:#fff;">₱${parseFloat(req.amount).toFixed(2)}</div>
+                                    <div class="tx-meta">To ${escapeHtml(req.gateway)} • ${escapeHtml(req.account_number || '')}</div>
+                                    <div style="font-size:10px; color:#475569; font-family:monospace; margin-top:2px;">Ref: ${req.id.slice(0,8)}</div>
+                                </div>
+                                <div><span class="tx-status ${statusBadgeClass}">${req.status}</span></div>
+                            </div>
+                            ${needsOtp ? `
+                                <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border-color); display:flex; gap:8px;">
+                                    <input type="text" id="otpInput-${req.id}" maxlength="6" placeholder="Enter 6-digit OTP" style="flex:1; background:#0b0f17; border:1px solid var(--border-color); border-radius:8px; padding:8px 12px; color:#fff; font-size:13px;">
+                                    <button onclick="verifyOtp('${req.id}')" style="background:#3b82f6; border:none; color:#fff; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">Verify</button>
+                                </div>
+                            ` : req.otp_verified ? '<div style="margin-top:8px; font-size:11px; color:#10b981;"><i class="fa-solid fa-circle-check"></i> OTP Verified</div>' : ''}
+                        </div>
+                    `;
+                }).reverse().join('');
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function verifyOtp(withdrawalId) {
+            const input = document.getElementById(`otpInput-${withdrawalId}`);
+            const code = input.value.trim();
+            if (!code) return showToast('Please enter the OTP code.', 'error');
+            try {
+                await api.post('/user/otp/verify', { code, relatedType: 'withdrawal', relatedId: withdrawalId });
+                showToast('OTP verified! Your withdrawal can now be approved.', 'success');
+                calculateAndLoadWallet();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        function validateLiveBalance() {
+            const amountInput = document.getElementById('withdrawAmount');
+            const submitBtn = document.getElementById('submitWithdrawalBtn');
+            const errorDiv = document.getElementById('balanceError');
+            const requestedAmount = parseFloat(amountInput.value) || 0;
+
+            if (globalApprovedBalance <= 0 || requestedAmount > globalApprovedBalance) {
+                submitBtn.disabled = true;
+                errorDiv.style.display = requestedAmount > 0 ? "block" : "none";
+            } else {
+                submitBtn.disabled = false;
+                errorDiv.style.display = "none";
+            }
+        }
+
+        function toggleAccountFieldLabel(typeText) {
+            document.getElementById('accountLabel').innerText = typeText + " / Account Identifier";
+        }
+
+        async function processWithdrawalRequest(event) {
+            event.preventDefault();
+            const withdrawValue = parseFloat(document.getElementById('withdrawAmount').value);
+
+            if (globalApprovedBalance <= 0 || withdrawValue > globalApprovedBalance) {
+                showToast('Insufficient balance.', 'error');
+                return;
+            }
+
+            const gatewayInput = document.querySelector('input[name="withdrawalGateway"]:checked');
+            if (!gatewayInput) return showToast('Please select a gateway.', 'error');
+            if (!document.getElementById('agreeFeeCheckbox').checked) return showToast('Please check the box to agree to the platform service fee before submitting.', 'error');
+
+            const accountNumber = document.getElementById('recipientAccount').value.trim();
+            try {
+                const result = await api.post('/user/withdrawals', {
+                    amount: withdrawValue,
+                    gateway: gatewayInput.value,
+                    accountNumber,
+                    accountName: document.getElementById('recipientName').value.trim(),
+                });
+                document.getElementById('withdrawalRequestForm').reset();
+                document.getElementById('accountLabel').innerText = "Account / Mobile Number";
+                calculateAndLoadWallet();
+                showWithdrawalReceipt(result, gatewayInput.value, accountNumber);
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        function showWithdrawalReceipt(result, gateway, accountNumber) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:6000; display:flex; align-items:center; justify-content:center; padding:20px;';
+            overlay.innerHTML = `
+                <div style="background:var(--bg-card,#131926); border:1px solid var(--border-color,#1e293b); border-radius:20px; max-width:380px; width:100%; padding:26px;">
+                    <div style="text-align:center; margin-bottom:16px;">
+                        <i class="fa-solid fa-circle-check" style="font-size:38px; color:#10b981;"></i>
+                        <h2 style="font-size:16px; margin-top:10px;">Withdrawal Request Submitted</h2>
+                        <p style="font-size:11px; color:#64748b;">Digital Receipt — keep this for your records</p>
+                    </div>
+                    <div style="font-size:13px; line-height:1.9;">
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748b;">Withdrawal ID</span><strong style="font-family:monospace; color:#10b981;">${result.displayId}</strong></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748b;">Gateway</span><strong>${gateway}</strong></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748b;">Account</span><strong>${accountNumber}</strong></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748b;">Amount</span><strong>₱${result.amount.toFixed(2)}</strong></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748b;">Service Fee</span><strong style="color:#f59e0b;">-₱${result.feeAmount.toFixed(2)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; border-top:1px solid #1e293b; margin-top:6px; padding-top:6px;"><span style="color:#64748b;">You'll Receive</span><strong style="color:#10b981;">₱${result.netAmount.toFixed(2)}</strong></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:6px;"><span style="color:#64748b;">Date</span><strong>${new Date().toLocaleString()}</strong></div>
+                    </div>
+                    <p style="font-size:11px; color:#f59e0b; margin-top:14px;"><i class="fa-solid fa-hourglass-half"></i> Status: Held from your balance — Awaiting Admin review, then Super Admin final approval.</p>
+                    <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%; padding:12px; border:none; border-radius:10px; background:#10b981; color:#fff; font-weight:700; font-size:13px; cursor:pointer; margin-top:14px;">Close</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        async function loadPlatformFee() {
+            try {
+                const data = await api.get('/user/platform-fee');
+                if (data.withdrawalFeePercent > 0) {
+                    document.getElementById('feePercentLabel').textContent = data.withdrawalFeePercent + '%';
+                    document.getElementById('feeNotice').style.display = 'block';
+                }
+            } catch (e) { /* non-fatal */ }
+        }
+
+        document.addEventListener('auth-ready', () => { calculateAndLoadWallet(); loadPlatformFee(); });
+    </script>
+</body>
+</html>

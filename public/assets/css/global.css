@@ -1,0 +1,135 @@
+/* Global site-wide scale — makes all text and spacing slightly smaller
+   and more compact across every page, without needing to edit every
+   individual font-size declaration in every file. */
+html {
+  zoom: 0.9;
+}
+
+/* Extra shrink on top of the base scale specifically for phone-sized
+   screens, where the desktop-sized cards/boxes/text feel oversized. */
+@media (max-width: 600px) {
+  html {
+    zoom: 0.78;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  html {
+    zoom: 0.85;
+  }
+}
+
+/* Every scrollable list/panel in the app should scroll smoothly without a
+   visible scrollbar track/thumb — keeps things looking clean instead of
+   obviously "boxed in a scroll area". */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, new Edge */
+}
+
+/* Elegant glowing violet badge for Premium tier tickets, used everywhere
+   a ticket tier is shown (Ticket Management, Buy Tickets, My Tickets...). */
+.premium-badge {
+  background: linear-gradient(135deg, #a855f7, #6d28d9);
+  color: #f3e8ff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 6px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
+  animation: premium-glow 2s ease-in-out infinite;
+}
+@keyframes premium-glow {
+  0%, 100% { box-shadow: 0 0 6px rgba(168, 85, 247, 0.5); }
+  50% { box-shadow: 0 0 14px rgba(168, 85, 247, 0.9); }
+}
+
+/* ============================================================
+   Collectible ticket cards — replaces the old QR-code ticket
+   layout everywhere a ticket is shown (Buy Tickets, Shop, My
+   Tickets, staff Ticket Management). Normal is plain and
+   functional; Gold has a metallic glowing finish; Premium has a
+   glowing purple-and-gold finish with sparkle accents.
+   ============================================================ */
+.ecp-ticket {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 320 / 170;
+  border-radius: 12px;
+  display: flex;
+  padding: 5% 6%;
+  overflow: hidden;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+.ecp-ticket::before, .ecp-ticket::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: var(--bg-main, #0b0f17);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ecp-ticket::before { left: -10px; }
+.ecp-ticket::after { right: -10px; }
+.ecp-ticket-notch-line {
+  position: absolute;
+  top: 8%;
+  bottom: 8%;
+  left: 74%;
+  border-left: 2px dashed rgba(255,255,255,0.35);
+}
+.ecp-ticket-main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-right: 8%; min-width: 0; }
+.ecp-ticket-tier-label { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 4%; font-family: Arial, sans-serif; }
+.ecp-ticket-code { font-size: 17px; font-weight: 900; font-family: 'Courier New', monospace; letter-spacing: 0.5px; margin-bottom: 4%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ecp-ticket-sub { font-size: 8.5px; font-weight: 700; letter-spacing: 1px; font-family: Arial, sans-serif; opacity: 0.85; }
+.ecp-ticket-meta { font-size: 7.5px; margin-top: 6%; opacity: 0.65; font-family: Arial, sans-serif; }
+.ecp-ticket-side { width: 20%; display: flex; align-items: center; justify-content: center; }
+.ecp-ticket-logo { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+
+.ecp-ticket-normal {
+  background: linear-gradient(135deg, #4a7ba6, #3a6088);
+  color: #0a1826;
+  border: 2px solid #2c4a68;
+}
+.ecp-ticket-normal .ecp-ticket-tier-label { color: #0a1826; }
+.ecp-ticket-normal .ecp-ticket-logo { background: rgba(255,255,255,0.25); color: #fff; }
+
+.ecp-ticket-gold {
+  background: linear-gradient(135deg, #fff4c9 0%, #f2c94c 25%, #d4a017 50%, #f2c94c 75%, #fff4c9 100%);
+  color: #4a3200;
+  border: 2px solid #a97c0a;
+  box-shadow: 0 0 18px rgba(242, 201, 76, 0.5), inset 0 0 16px rgba(255,255,255,0.3);
+}
+.ecp-ticket-gold .ecp-ticket-notch-line { border-left-color: rgba(74,50,0,0.35); }
+.ecp-ticket-gold .ecp-ticket-tier-label { color: #6b4a00; }
+.ecp-ticket-gold .ecp-ticket-logo { background: rgba(74,50,0,0.15); color: #4a3200; }
+.ecp-ticket-corner { position: absolute; font-size: 12px; opacity: 0.5; color: #4a3200; }
+.ecp-ticket-gold .tc-tl { top: 6%; left: 5%; }
+.ecp-ticket-gold .tc-br { bottom: 6%; right: 24%; }
+
+.ecp-ticket-premium {
+  background: linear-gradient(135deg, #2d1b4e 0%, #4a2c7a 35%, #6b3fa0 60%, #2d1b4e 100%);
+  color: #f3e8ff;
+  border: 2px solid #c9a636;
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.5), 0 0 12px rgba(201, 166, 54, 0.4), inset 0 0 20px rgba(201,166,54,0.15);
+  animation: ecp-premium-pulse 2.5s ease-in-out infinite;
+}
+.ecp-ticket-premium .ecp-ticket-notch-line { border-left-color: rgba(243,232,255,0.3); }
+.ecp-ticket-premium .ecp-ticket-tier-label { color: #e9c968; letter-spacing: 2px; }
+.ecp-ticket-premium .ecp-ticket-code { background: linear-gradient(90deg, #f3e8ff, #e9c968); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.ecp-ticket-premium .ecp-ticket-logo { background: rgba(233,201,104,0.2); color: #e9c968; border: 1px solid rgba(233,201,104,0.5); }
+.ecp-sparkle { position: absolute; color: #e9c968; font-size: 9px; opacity: 0.85; }
+.ecp-sparkle.sp1 { top: 8%; left: 5%; }
+.ecp-sparkle.sp2 { top: 14%; right: 22%; }
+.ecp-sparkle.sp3 { bottom: 10%; left: 8%; font-size: 7px; }
+@keyframes ecp-premium-pulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(168, 85, 247, 0.45), 0 0 10px rgba(201, 166, 54, 0.35), inset 0 0 20px rgba(201,166,54,0.12); }
+  50% { box-shadow: 0 0 28px rgba(168, 85, 247, 0.65), 0 0 16px rgba(201, 166, 54, 0.55), inset 0 0 24px rgba(201,166,54,0.2); }
+}

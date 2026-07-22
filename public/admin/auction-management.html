@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Auction Management</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:70px 20px 40px;}
+  .wrap{max-width:800px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:20px;}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:20px;margin-bottom:20px;}
+  .card h2{font-size:14px;font-weight:700;margin-bottom:14px;}
+  label{font-size:12px;font-weight:600;color:#cbd5e1;display:block;margin-bottom:6px;}
+  input[type="text"], input[type="number"], input[type="datetime-local"], input[type="file"], textarea{width:100%;background:#0b0f17;border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;margin-bottom:14px;}
+  .btn{padding:11px 18px;border:none;border-radius:10px;background:var(--accent-green);color:#fff;font-weight:700;font-size:13px;cursor:pointer;}
+  .item-row{background:#0b0f17;border:1px solid var(--border-color);border-radius:12px;padding:14px;margin-bottom:12px;}
+  .item-row-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .status-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;text-transform:uppercase;}
+  .badge-active{background:rgba(16,185,129,0.15);color:#10b981;}
+  .badge-ended{background:#334155;color:#94a3b8;}
+  .badge-cancelled{background:rgba(239,68,68,0.15);color:#ef4444;}
+  .bid-list{max-height:150px;overflow-y:auto;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-color);}
+  .bid-item{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);padding:4px 0;}
+  #itemsList{max-height:600px;overflow-y:auto;}
+</style>
+</head>
+<body>
+<a href="shop_management.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Shop Management">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1><i class="fa-solid fa-gavel" style="color:#f59e0b;"></i> Auction Management</h1>
+    <p class="sub">Deploy special items for bidding, and monitor everything happening inside — every bid, every bidder, live. <a href="/user/auction.html" style="color:#10b981;">Watch the Live Auction Monitor &rarr;</a></p>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-plus"></i> Deploy New Auction Item</h2>
+        <label>Item Name</label>
+        <input type="text" id="itemName" placeholder="e.g. Limited Edition Gold Watch">
+        <label>Description (optional)</label>
+        <textarea id="itemDesc" rows="2"></textarea>
+        <label>Photo (optional)</label>
+        <input type="file" id="itemImage" accept="image/png,image/jpeg,image/webp">
+        <label>Starting Price (₱)</label>
+        <input type="number" id="startingPrice" placeholder="e.g. 500">
+        <label>Minimum Bid Increment (₱)</label>
+        <input type="number" id="minIncrement" placeholder="e.g. 50" value="50">
+        <label>Auction End Date & Time</label>
+        <input type="datetime-local" id="endTime">
+        <button class="btn" id="deployBtn" onclick="deployAuctionItem()"><i class="fa-solid fa-gavel"></i> Deploy to Auction</button>
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-list"></i> All Auction Items</h2>
+        <div id="itemsList"><div style="color:#64748b; font-size:13px;">Loading...</div></div>
+    </div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    async function deployAuctionItem() {
+        const name = document.getElementById('itemName').value.trim();
+        const description = document.getElementById('itemDesc').value.trim();
+        const startingPrice = document.getElementById('startingPrice').value;
+        const minIncrement = document.getElementById('minIncrement').value;
+        const endTime = document.getElementById('endTime').value;
+        const imageFile = document.getElementById('itemImage').files[0];
+
+        if (!name || !startingPrice || !endTime) return showToast('Please fill in name, starting price, and end time.', 'error');
+
+        setBtnLoading('deployBtn', true);
+        try {
+            const form = new FormData();
+            form.append('name', name);
+            form.append('description', description);
+            form.append('startingPrice', startingPrice);
+            form.append('minIncrement', minIncrement);
+            form.append('endTime', new Date(endTime).toISOString());
+            if (imageFile) form.append('image', imageFile);
+
+            await api.post('/admin/auction-items', form, true);
+            showToast('Auction item deployed!', 'success');
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemDesc').value = '';
+            document.getElementById('startingPrice').value = '';
+            document.getElementById('itemImage').value = '';
+            document.getElementById('endTime').value = '';
+            loadItems();
+        } catch (e) {
+            showToast(e.message, 'error');
+        } finally {
+            setBtnLoading('deployBtn', false, '<i class="fa-solid fa-gavel"></i> Deploy to Auction');
+        }
+    }
+
+    async function loadItems() {
+        const list = document.getElementById('itemsList');
+        try {
+            const { items } = await api.get('/admin/auction-items');
+            if (!items.length) { list.innerHTML = `<div style="color:#64748b; font-size:13px; font-style:italic;">No auction items yet.</div>`; return; }
+
+            list.innerHTML = items.map(t => `
+                <div class="item-row">
+                    <div class="item-row-top">
+                        <div>
+                            <div style="font-weight:700; font-size:14px;">${escapeHtml(t.name)} <span class="status-badge badge-${t.status}">${t.status}</span></div>
+                            <div style="font-size:11px; color:#64748b; margin-top:3px;">Ends: ${new Date(t.end_time).toLocaleString()}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:18px; font-weight:800; color:#f59e0b;">₱${parseFloat(t.current_price).toFixed(2)}</div>
+                            <div style="font-size:11px; color:#64748b;">${t.current_bidder_name ? 'Leading: ' + escapeHtml(t.current_bidder_name) : 'No bids yet'}</div>
+                        </div>
+                    </div>
+                    ${t.status === 'active' ? `
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <button class="btn" style="background:#3b82f6; padding:7px 12px; font-size:11px;" onclick="endAuction(${t.id})">End Now</button>
+                            <button class="btn" style="background:#ef4444; padding:7px 12px; font-size:11px;" onclick="cancelAuction(${t.id})">Cancel</button>
+                            <button class="btn" style="background:#334155; padding:7px 12px; font-size:11px;" onclick="toggleBids(${t.id})">View Bids</button>
+                        </div>
+                    ` : `<button class="btn" style="background:#334155; padding:7px 12px; font-size:11px; margin-top:10px;" onclick="toggleBids(${t.id})">View Bids</button>`}
+                    <div class="bid-list" id="bids-${t.id}" style="display:none;"></div>
+                </div>
+            `).join('');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function toggleBids(id) {
+        const el = document.getElementById(`bids-${id}`);
+        if (el.style.display === 'block') { el.style.display = 'none'; return; }
+        try {
+            const { bids } = await api.get(`/admin/auction-items/${id}/bids`);
+            el.innerHTML = bids.length ? bids.map(b => `
+                <div class="bid-item"><span>${escapeHtml(b.full_name)} (@${escapeHtml(b.username)})</span><span>₱${parseFloat(b.amount).toFixed(2)} — ${new Date(b.created_at).toLocaleString()}</span></div>
+            `).join('') : `<div class="bid-item">No bids yet.</div>`;
+            el.style.display = 'block';
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function endAuction(id) {
+        if (!(await appConfirm('End this auction right now? The highest bidder (if any) will win immediately.', 'End Auction'))) return;
+        try {
+            await api.post(`/admin/auction-items/${id}/end`, {});
+            showToast('Auction ended.', 'success');
+            loadItems();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function cancelAuction(id) {
+        if (!(await appConfirm('Cancel this auction entirely? No one will win it.', 'Cancel Auction'))) return;
+        try {
+            await api.post(`/admin/auction-items/${id}/cancel`, {});
+            showToast('Auction cancelled.', 'success');
+            loadItems();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', () => {
+        loadItems();
+        setInterval(loadItems, 15000);
+    });
+</script>
+</body>
+</html>

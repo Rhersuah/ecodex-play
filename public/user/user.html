@@ -1,0 +1,948 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E - Codex Play | Client Hub</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #070c12;
+            --bg-card: #0b1626;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --text-main: #ffffff;
+            --text-muted: #64748b;
+            --border-color: #1e293b;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Base Design */
+        #sidebarMenu {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: var(--sidebar-width);
+            height: 100vh;
+            height: 100dvh;
+            background-color: #070c12;
+            border-right: 1px solid #1e293b;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: left 0.3s ease;
+        }
+
+        #sidebarOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+            display: none;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1e293b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid var(--accent-purple); overflow: hidden; }
+
+        .close-sidebar-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .menu-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 10px;
+        }
+
+        .menu-section-title {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            font-weight: 600;
+            padding: 10px 10px 5px 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .menu-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+        }
+
+        .menu-row:hover {
+            background: #0f1626;
+            color: #ffffff;
+        }
+
+        .menu-row.active {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+        }
+
+        .menu-left-content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .menu-left-content i {
+            width: 18px;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .menu-group { margin-bottom: 4px; }
+        .menu-group-label { padding: 10px 14px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: #475569; text-transform: uppercase; }
+        .submenu { padding-left: 8px; }
+        .submenu .menu-row { font-size: 14px; padding: 12px 14px; }
+        .submenu .menu-left-content i { font-size: 15px; width: 18px; }
+
+        /* Adjusted Logout Panel */
+        .sidebar-footer {
+            padding: 25px 20px;
+            border-top: 1px solid #1e293b;
+            margin-bottom: 20px;
+        }
+
+        /* Main View Wrapper */
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* Top Header Navigation */
+        .top-nav {
+            background-color: var(--bg-card);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .brand span {
+            color: var(--accent-green);
+        }
+
+        .wallet-display {
+            background: #1a2233;
+            border: 1px solid #2e3c54;
+            border-radius: 12px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .wallet-info label {
+            display: block;
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .wallet-info var {
+            font-style: normal;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* Content container settings */
+        .content-container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 15px 100px 15px;
+        }
+
+        /* Hero Banner (Premium Client Version) */
+        .hero-banner {
+            background: linear-gradient(135deg, #1e14b0 0%, #07172a 100%);
+            border: 1px solid #312e41;
+            border-radius: 24px;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-pic-container {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #1e14b0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid var(--accent-purple);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); overflow: hidden; }
+
+        .profile-pic-container i {
+            font-size: 40px;
+            color: #a78bfa;
+        }
+
+        .welcome-text h1 {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            color: #f3f4f6;
+        }
+
+        .welcome-text p {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        /* Grid System Config */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.3px;
+        }
+
+        .section-header .view-all {
+            color: var(--accent-purple);
+            text-decoration: none;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Client specific grids - Compact Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .stat-icon-wrapper {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        .stat-card var {
+            font-style: normal;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .stat-card var.balance-text {
+            color: var(--accent-green);
+        }
+
+        .stat-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .theme-purple {
+            color: #c084fc;
+            background: rgba(192, 132, 252, 0.15);
+        }
+
+        .theme-blue {
+            color: #60a5fa;
+            background: rgba(96, 165, 250, 0.15);
+        }
+
+        .theme-orange {
+            color: #fb923c;
+            background: rgba(245, 158, 11, 0.15);
+        }
+
+        .theme-green {
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.15);
+        }
+
+        .theme-red {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.15);
+        }
+
+        /* Big Action Tiles for Client Gamer feel */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .action-tile {
+            background: linear-gradient(135deg, #0f1626 0%, #141d30 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            text-align: center;
+            border-bottom: 3px solid var(--border-color);
+        }
+
+        .action-tile:hover {
+            border-bottom-color: var(--accent-purple);
+        }
+
+        .action-icon {
+            font-size: 24px;
+        }
+
+        .action-tile span {
+            font-size: 12px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .bulletin-panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 20px;
+        }
+
+        /* Same visual format used everywhere a Bulletin post is shown —
+           Super Admin, Admin, and User dashboards, and the staff editor's
+           "Published Posts" list — so a post looks identical in all of them. */
+        .list-item{background:var(--bg-main);border:1px solid var(--border-color);border-radius:14px;padding:16px 18px;margin-bottom:12px;}
+        .list-item h3{font-size:14px;margin-bottom:4px;}
+        .list-item p{font-size:12px;color:#cbd5e1;line-height:1.5;}
+        .list-item .meta{font-size:11px;color:#94a3b8;margin-top:8px;}
+
+        /* Bottom Fixed Navigation Bar (Mobile View Only) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .nav-item.active {
+            color: var(--accent-purple);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+
+        /* ============================
+           DISTINCT CLIENT DESKTOP LAYOUT ADJUSTMENTS
+           ============================ */
+        @media (min-width: 992px) {
+            body {
+                flex-direction: row;
+                background-color: #05070f;
+            }
+
+            #sidebarMenu {
+                left: 0 !important;
+                width: var(--sidebar-width);
+                background-color: #090e16;
+                box-shadow: none;
+            }
+
+            #sidebarOverlay {
+                display: none !important;
+            }
+
+            .close-sidebar-btn {
+                display: none;
+            }
+
+            .main-wrapper {
+                margin-left: var(--sidebar-width);
+                width: calc(100% - var(--sidebar-width));
+            }
+
+            .bottom-nav {
+                display: none;
+            }
+
+            .menu-toggle {
+                display: none;
+            }
+
+            /* Gamers/Client Centered Layout Structure */
+            .content-container {
+                max-width: 1200px;
+                padding: 45px;
+            }
+
+            /* Bigger, 3 columns for client stats */
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+
+            /* Malalaking tiles sa client dashboard */
+            .actions-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 16px;
+            }
+
+            .hero-banner {
+                padding: 40px;
+                background: linear-gradient(135deg, #1e14b0 10%, #070c12 100%);
+                border-left: 5px solid var(--accent-purple);
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="shardModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:6000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:linear-gradient(160deg, #1a1030, #0b0f17); border:1px solid rgba(168,85,247,0.4); border-radius:24px; max-width:360px; width:100%; padding:30px 26px; text-align:center; box-shadow:0 0 60px rgba(168,85,247,0.25);">
+        <div id="shardModalIcon" style="margin:0 auto 16px;"></div>
+        <h3 id="shardModalTitle" style="font-size:17px; font-weight:800; margin-bottom:8px;">Daily Shard Collection</h3>
+        <p id="shardModalDesc" style="font-size:13px; color:#94a3b8; line-height:1.6; margin-bottom:22px;"></p>
+        <div id="shardModalResult" style="display:none; margin-bottom:18px;"></div>
+        <button id="shardCollectBtn" onclick="collectShards()" style="width:100%; padding:13px; border:none; border-radius:12px; background:linear-gradient(135deg, #a855f7, #6d28d9); color:#fff; font-weight:700; font-size:14px; cursor:pointer;"><i class="fa-solid fa-hand-sparkles"></i> Collect Shards</button>
+        <button onclick="document.getElementById('shardModalOverlay').style.display='none'" style="width:100%; padding:12px; border:none; border-radius:12px; background:transparent; color:#64748b; font-weight:600; font-size:13px; cursor:pointer; margin-top:8px;">Close</button>
+    </div>
+</div>
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+
+    <div id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    
+    <aside id="sidebarMenu">
+        <div class="sidebar-header">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar" id="sidebarAvatarWrapper"><i class="fa-solid fa-user" style="color: #a78bfa;" id="sidebarAvatarIcon"></i><img id="sidebarAvatarImg" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%;"></div>
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 600; color: #ffffff;" id="sidebarUserName">Player</h3>
+                    <span style="font-size: 11px; background: rgba(139, 92, 246, 0.15); color: #a78bfa; padding: 2px 8px; border-radius: 4px;">Client User</span>
+                </div>
+            </div>
+            <button class="close-sidebar-btn" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <nav class="menu-nav">
+            <span class="menu-section-title">Client Workspace</span>
+
+            <a href="account.html" class="menu-row">
+                <div class="menu-left-content"><i class="fa-solid fa-user-gear"></i><span>Account</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+
+            <a href="vip.html" class="menu-row">
+                <div class="menu-left-content"><i class="fa-solid fa-crown"></i><span>VIP Status</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+
+            <a href="user.html" class="menu-row active">
+                <div class="menu-left-content"><i class="fa-solid fa-house"></i><span>Dashboard</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+
+            <a href="messages.html" class="menu-row">
+                <div class="menu-left-content"><i class="fa-regular fa-comment-dots"></i><span>Messages</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+
+            <a href="balance.html" class="menu-row">
+                <div class="menu-left-content"><i class="fa-solid fa-scale-balanced"></i><span>Balance</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+
+            <a href="shop.html" class="menu-row">
+                <div class="menu-left-content"><i class="fa-solid fa-cart-shopping"></i><span>Shop</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+
+            <a href="inventory.html" class="menu-row">
+                <div class="menu-left-content"><i class="fa-solid fa-gem"></i><span>Inventory</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+
+            <a href="live_draw.html" class="menu-row">
+                <div class="menu-left-content"><i class="fa-solid fa-circle-play"></i><span>Live Draw</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+
+            <a href="settings.html" class="menu-row">
+                <div class="menu-left-content"><i class="fa-solid fa-gear"></i><span>Settings</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+
+            <a href="about.html" class="menu-row">
+                <div class="menu-left-content"><i class="fa-solid fa-circle-info"></i><span>About</span></div>
+                <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="#" onclick="doLogout(); return false;" style="display: flex; align-items: center; gap: 12px; color: #f87171; text-decoration: none; font-size: 14px; font-weight: 500;"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Logout</span></a>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-nav">
+            <div class="nav-left">
+                <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <div class="brand"><img src="/assets/images/logo-full.png" style="height:68px; width:auto; object-fit:contain;" alt="E-Codex Play"></div>
+            </div>
+            <div class="wallet-display">
+                <i class="fa-solid fa-wallet" style="color: #94a3b8;"></i>
+                <div class="wallet-info">
+                    <label>My Funds</label>
+                    <var id="topBalance">₱ 0.00</var>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-container">
+            <div id="drawReminderBanner" style="display:none; background:linear-gradient(135deg, #f59e0b, #d97706); border-radius:14px; padding:14px 18px; margin-bottom:16px; display:none; align-items:center; gap:12px; cursor:pointer;" onclick="window.location.href='live_draw.html'">
+                <i class="fa-solid fa-bell" style="font-size:20px; color:#000;"></i>
+                <div style="color:#000; font-weight:700; font-size:13px;" id="drawReminderText"></div>
+            </div>
+            <section class="hero-banner">
+                <div class="profile-pic-container" id="heroAvatarWrapper"><i class="fa-solid fa-user" id="heroAvatarIcon"></i><img id="heroAvatarImg" style="display:none; width:100%; height:100%; object-fit:cover; border-radius:50%;"></div>
+                <div class="welcome-text">
+                    <p>Welcome back, Player</p>
+                    <h1 id="welcomeName">Player</h1>
+                    <p>Ready to join the next event? Good luck today!</p>
+                </div>
+            </section>
+
+            <section class="section-header">
+                <h2>Account Summary</h2>
+                <a href="balance.html" class="view-all">History Logs <i class="fa-solid fa-chevron-right"></i></a>
+            </section>
+
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-meta">
+                        <div class="stat-icon-wrapper theme-green"><i class="fa-solid fa-wallet"></i></div>
+                        <span>Current Wallet</span>
+                    </div>
+                    <var class="balance-text" id="statBalance">₱ 0.00</var>
+                    <a href="deposit_funds.html" style="text-decoration:none;"><div class="stat-action-row" style="color: #4ade80;"><span>Top Up Balance</span><i class="fa-solid fa-chevron-right"></i></div></a>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-meta">
+                        <div class="stat-icon-wrapper theme-blue"><i class="fa-solid fa-ticket"></i></div>
+                        <span>My Active Tickets</span>
+                    </div>
+                    <var id="statActiveTickets">0</var>
+                    <a href="my_tickets.html" style="text-decoration:none;"><div class="stat-action-row" style="color: #60a5fa;"><span>View Numbers</span><i class="fa-solid fa-chevron-right"></i></div></a>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-meta">
+                        <div class="stat-icon-wrapper theme-orange"><i class="fa-solid fa-trophy"></i></div>
+                        <span>Lucky Wins</span>
+                    </div>
+                    <var id="statWins">0</var>
+                    <a href="my_tickets.html" style="text-decoration:none;"><div class="stat-action-row" style="color: #fb923c;"><span>View Tickets</span><i class="fa-solid fa-chevron-right"></i></div></a>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-meta">
+                        <div class="stat-icon-wrapper theme-purple"><i class="fa-solid fa-clipboard-list"></i></div>
+                        <span>Total Actions</span>
+                    </div>
+                    <var id="statTotalTxns">0</var>
+                    <a href="balance.html" style="text-decoration:none;"><div class="stat-action-row" style="color: #c084fc;"><span>Full Logs</span><i class="fa-solid fa-chevron-right"></i></div></a>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-meta">
+                        <div class="stat-icon-wrapper theme-red"><i class="fa-solid fa-hourglass-half"></i></div>
+                        <span>Pending Transactions</span>
+                    </div>
+                    <var id="statPending">0</var>
+                    <a href="balance.html" style="text-decoration:none;"><div class="stat-action-row" style="color: #f87171;"><span>Track Status</span><i class="fa-solid fa-chevron-right"></i></div></a>
+                </div>
+            </section>
+
+            <section class="section-header"><h2>Quick Portal Actions</h2></section>
+            
+            <section class="actions-grid">
+                <a href="deposit_funds.html" class="action-tile" style="text-decoration:none;">
+                    <i class="fa-solid fa-wallet action-icon" style="color: #c084fc;"></i>
+                    <span>Deposit Funds</span>
+                </a>
+                <a href="withdraw_funds.html" class="action-tile" style="text-decoration:none;">
+                    <i class="fa-solid fa-money-bill-transfer action-icon" style="color: #4ade80;"></i>
+                    <span>Withdraw Cash</span>
+                </a>
+                <a href="buy_tickets.html" class="action-tile" style="text-decoration:none;">
+                    <i class="fa-solid fa-ticket action-icon" style="color: #8b5cf6;"></i>
+                    <span>Buy Tickets Now</span>
+                </a>
+                <a href="my_tickets.html" class="action-tile" style="text-decoration:none;">
+                    <i class="fa-solid fa-gift action-icon" style="color: #fb923c;"></i>
+                    <span>My Tickets</span>
+                </a>
+                <a href="messages.html" class="action-tile" style="text-decoration:none;">
+                    <i class="fa-solid fa-comment-dots action-icon" style="color: #3b82f6;"></i>
+                    <span>Contact Support</span>
+                </a>
+            </section>
+
+            <section class="section-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-bullhorn" style="color: var(--accent-purple);"></i>
+                    <h2>Bulletin</h2>
+                </div>
+            </section>
+
+            <section class="bulletin-panel" id="bulletinPanel">
+                <div style="color:#94a3b8; font-size:13px; text-align:center; padding:20px 0;">Loading...</div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <a class="nav-item active" href="user.html"><i class="fa-solid fa-house"></i><span>Dashboard</span></a>
+            <a class="nav-item" href="my_tickets.html"><i class="fa-solid fa-ticket-simple"></i><span>Tickets</span></a>
+            <a class="nav-item" href="my_tickets.html"><i class="fa-solid fa-trophy"></i><span>Wins</span></a>
+            <a class="nav-item" href="messages.html"><i class="fa-solid fa-comment-dots"></i><span>Support</span></a>
+        </nav>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            if (window.innerWidth >= 992) return;
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar.style.left === '0px') {
+                sidebar.style.left = '-280px';
+                overlay.style.display = 'none';
+            } else {
+                sidebar.style.left = '0px';
+                overlay.style.display = 'block';
+            }
+        }
+
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        async function loadDashboard() {
+            try {
+                const [{ balance }, { transactions }, { tickets }, { announcements }] = await Promise.all([
+                    api.get('/user/balance'),
+                    api.get('/user/transactions'),
+                    api.get('/user/tickets/mine'),
+                    api.get('/shared/announcements'),
+                ]);
+
+                const formatted = pesos(balance);
+                document.getElementById('topBalance').textContent = formatted;
+                document.getElementById('statBalance').textContent = formatted;
+                document.getElementById('statActiveTickets').textContent = tickets.filter(t => t.status === 'active').length;
+                document.getElementById('statWins').textContent = tickets.filter(t => t.status === 'won').length;
+                document.getElementById('statTotalTxns').textContent = transactions.length;
+                document.getElementById('statPending').textContent = transactions.filter(t => t.status === 'pending' || t.status === 'admin_approved').length;
+
+                const bulletin = document.getElementById('bulletinPanel');
+                bulletin.innerHTML = announcements.length ? announcements.map(a => `
+                    <div class="list-item">
+                        <span style="font-size:10px; font-weight:700; text-transform:uppercase; color:${a.event_date ? '#f59e0b' : '#3b82f6'};">${a.event_date ? 'EVENT' : 'ANNOUNCEMENT'}</span>
+                        <h3>${escapeHtml(a.title)}</h3>
+                        ${a.media_url
+                            ? (a.media_type === 'video'
+                                ? `<video src="${a.media_url}" controls style="width:100%; border-radius:10px; margin:8px 0;"></video>`
+                                : `<img src="${a.media_url}" style="width:100%; border-radius:10px; margin:8px 0;">`)
+                            : ''}
+                        <p>${escapeHtml(a.body)}</p>
+                        <div class="meta">${a.event_date ? new Date(a.event_date).toLocaleString() : new Date(a.created_at).toLocaleString()}</div>
+                    </div>
+                `).join('') : `<div style="color:#94a3b8; font-size:13px; text-align:center; padding:20px 0;">No announcements yet.</div>`;
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function loadNotificationDots() {
+            try {
+                const { messages } = await api.get('/shared/messages/my-thread');
+                const lastSupportMsg = [...messages].reverse().find(m => m.from === 'support');
+                if (lastSupportMsg) {
+                    const lastReadKey = 'ecodex_last_read_support_msg';
+                    const lastReadTime = localStorage.getItem(lastReadKey);
+                    if (!lastReadTime || new Date(lastSupportMsg.created_at) > new Date(lastReadTime)) {
+                        addNotificationDot('messages.html', 1);
+                    }
+                }
+            } catch (e) { /* non-fatal */ }
+        }
+
+        document.addEventListener('auth-ready', (e) => {
+            document.getElementById('welcomeName').textContent = e.detail.full_name || e.detail.username || 'Player';
+            document.getElementById('sidebarUserName').textContent = e.detail.full_name || e.detail.username || 'Player';
+
+            if (e.detail.avatar_url) {
+                document.getElementById('heroAvatarImg').src = e.detail.avatar_url;
+                document.getElementById('heroAvatarImg').style.display = 'block';
+                document.getElementById('heroAvatarIcon').style.display = 'none';
+
+                document.getElementById('sidebarAvatarImg').src = e.detail.avatar_url;
+                document.getElementById('sidebarAvatarImg').style.display = 'block';
+                document.getElementById('sidebarAvatarIcon').style.display = 'none';
+            }
+            loadDashboard();
+            loadNotificationDots();
+            setInterval(loadNotificationDots, 10000);
+            checkShardStatus();
+            checkDrawReminder();
+            setInterval(checkDrawReminder, 15000);
+        });
+
+        async function checkDrawReminder() {
+            try {
+                const status = await api.get('/shared/draw-pool-status');
+                if (!status.draw || status.draw.status !== 'open') {
+                    document.getElementById('drawReminderBanner').style.display = 'none';
+                    return;
+                }
+                const msLeft = new Date(status.draw.draw_date).getTime() - Date.now();
+                const minsLeft = msLeft / 60000;
+                const banner = document.getElementById('drawReminderBanner');
+                const text = document.getElementById('drawReminderText');
+
+                // Show a banner once the draw crosses the 5-minute mark, and
+                // again once it crosses 2 minutes — each shown only once per
+                // draw so it doesn't nag on every dashboard visit.
+                const seenKey5 = 'drawReminder5_' + status.draw.id;
+                const seenKey2 = 'drawReminder2_' + status.draw.id;
+
+                if (minsLeft <= 2 && minsLeft > 0) {
+                    banner.style.display = 'flex';
+                    text.textContent = `Live Draw starting in about 2 minutes — get ready!`;
+                    localStorage.setItem(seenKey2, '1');
+                } else if (minsLeft <= 5 && minsLeft > 2) {
+                    banner.style.display = 'flex';
+                    text.textContent = `Live Draw starting in about 5 minutes!`;
+                    localStorage.setItem(seenKey5, '1');
+                } else {
+                    banner.style.display = 'none';
+                }
+            } catch (e) { /* non-fatal */ }
+        }
+
+        const ITEM_TYPE_LABELS = { shard: 'Shard', chest: 'Chest', coins: 'Coins', diamond: 'Diamond' };
+
+        async function checkShardStatus() {
+            try {
+                const data = await api.get('/user/shard-status');
+                if (!data.active) return;
+
+                // Only show the popup once per day (shifted to the same 8AM
+                // reset boundary the backend uses) — not every single time
+                // the user opens their dashboard.
+                const seenKey = 'shardPopupSeen_' + data.event.id;
+                const todayKey = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+                if (localStorage.getItem(seenKey) === todayKey) return;
+                localStorage.setItem(seenKey, todayKey);
+
+                if (data.alreadyCollectedToday) {
+                    const label = ITEM_TYPE_LABELS[data.todaysItemType] || 'Item';
+                    document.getElementById('shardModalIcon').innerHTML = itemIconSVG(data.todaysItemType || 'shard', 56);
+                    document.getElementById('shardModalTitle').textContent = data.event.name;
+                    document.getElementById('shardModalDesc').textContent = `You already collected ${data.todaysAmount} ${label}${data.todaysAmount > 1 ? 's' : ''} today. Come back tomorrow!`;
+                    document.getElementById('shardCollectBtn').style.display = 'none';
+                } else {
+                    document.getElementById('shardModalIcon').innerHTML = itemIconSVG((data.event.iconType || 'shard').split(',')[0], 56);
+                    document.getElementById('shardModalTitle').textContent = data.event.name;
+                    document.getElementById('shardModalDesc').textContent = data.event.description || 'Collect your daily item! Both the type and amount are random — you might get lucky.';
+                    document.getElementById('shardCollectBtn').style.display = 'block';
+                }
+                document.getElementById('shardModalOverlay').style.display = 'flex';
+            } catch (e) { /* non-fatal */ }
+        }
+
+        function playShardCollectSound(amount) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                // A little ascending chime — more notes and a brighter tone for bigger hauls.
+                const notes = amount >= 16 ? [523, 659, 784, 1047, 1319] : amount >= 6 ? [523, 659, 784] : [523, 659];
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'triangle';
+                    const start = ctx.currentTime + i * 0.09;
+                    osc.frequency.setValueAtTime(freq, start);
+                    gain.gain.setValueAtTime(0.001, start);
+                    gain.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+                    osc.start(start);
+                    osc.stop(start + 0.35);
+                });
+            } catch (e) { /* audio not supported — silently skip */ }
+        }
+
+        async function collectShards() {
+            try {
+                const data = await api.post('/user/shard-collect', {});
+                const label = ITEM_TYPE_LABELS[data.itemType] || 'Item';
+                playShardCollectSound(data.amount);
+                document.getElementById('shardModalIcon').innerHTML = itemIconSVG(data.itemType || 'shard', 56);
+                document.getElementById('shardCollectBtn').style.display = 'none';
+                document.getElementById('shardModalDesc').textContent = 'Nice! Check your Inventory to see your total.';
+                const resultBox = document.getElementById('shardModalResult');
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <div style="font-size:38px; font-weight:800; background:linear-gradient(135deg,#e9d5ff,#a855f7); -webkit-background-clip:text; background-clip:text; color:transparent;">+${data.amount}</div>
+                    <div style="font-size:12px; color:#94a3b8;">${label}${data.amount > 1 ? 's' : ''} Collected</div>
+                `;
+                showToast(`You collected ${data.amount} ${label}${data.amount > 1 ? 's' : ''}!`, 'success');
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+    </script>
+</body>
+</html>

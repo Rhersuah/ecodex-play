@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E - Codex Play | Personal Client Terminal</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #0b0f17; --bg-card: #131926; --accent-purple: #8b5cf6;
+            --accent-green: #10b981; --accent-red: #ef4444; --text-main: #ffffff;
+            --text-muted: #94a3b8; --border-color: #1e293b; --role-color: var(--accent-purple);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 70px 15px 40px; display: flex; flex-direction: column; align-items: center; }
+        .balance-container { width: 100%; max-width: 1000px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .role-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 6px; margin-bottom: 15px; background: rgba(139, 92, 246, 0.15); color: var(--role-color); }
+        .header-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+        .header-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 30px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 35px; }
+        .summary-card { background: #0b0f17; border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
+        .summary-card label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .summary-card var { font-style: normal; font-size: 24px; font-weight: 700; color: var(--text-main); }
+        .summary-card i { position: absolute; right: 20px; bottom: 20px; font-size: 30px; opacity: 0.05; color: #fff; }
+        .section-title { font-size: 18px; font-weight: 600; margin-top: 30px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .client-stats-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        @media (max-width: 576px) { .client-stats-box { grid-template-columns: 1fr; } }
+        .mini-stat-card { background: #0b0f17; border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 15px; }
+        .mini-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 18px; }
+        .logs-box { background: #0b0f17; border: 1px solid var(--border-color); border-radius: 16px; padding: 15px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .log-item { padding: 10px 14px; border-radius: 6px; background: rgba(30, 41, 59, 0.3); border-left: 4px solid var(--accent-purple); }
+        .log-item.success { border-left-color: var(--accent-green); background: rgba(16, 185, 129, 0.05); }
+        .log-item.danger { border-left-color: var(--accent-red); background: rgba(239, 68, 68, 0.05); }
+        .unauthorized-card { text-align:center; padding: 40px; color:var(--text-muted); font-style:italic;}
+    .related-links-section { background: var(--bg-card, #131926); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; padding: 8px 20px; margin-bottom: 24px; }
+    .related-link-row { display: flex; align-items: center; gap: 14px; padding: 16px 4px; color: #8b5cf6; text-decoration: none; font-size: 15px; font-weight: 600; border-bottom: 1px solid var(--border-color, #1e293b); }
+    .related-link-row:last-child { border-bottom: none; }
+    .related-link-row i { width: 20px; text-align: center; font-size: 16px; }
+    </style>
+</head>
+<body>
+<a href="user.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+
+    <div class="balance-container" id="mainTerminal">
+        <span class="role-badge">Personal Client Profile</span>
+        <h1 class="header-title" id="userNameTitle">Client Terminal</h1>
+        <p class="header-subtitle">Your balance and deposit/withdraw transaction history.</p>
+
+        <div class="related-links-section">
+            <a href="deposit_funds.html" class="related-link-row"><i class="fa-solid fa-wallet"></i> Deposit</a>
+            <a href="withdraw_funds.html" class="related-link-row"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</a>
+        </div>
+
+        <div class="summary-grid" id="metricsGrid"></div>
+
+        <h2 class="section-title"><i class="fa-solid fa-chart-line"></i> Transaction History</h2>
+        <div class="logs-box" id="userNotes" style="max-height:400px;"></div>
+    </div>
+
+    <script>
+        function formatPHP(val) { return "₱ " + parseFloat(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }); }
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        function statusLabel(status) {
+            if (status === 'pending') return { text: 'Awaiting Review', cls: '' };
+            if (status === 'admin_approved') return { text: 'Awaiting Final Approval', cls: '' };
+            if (status === 'approved' || status === 'completed') return { text: 'Approved', cls: 'success' };
+            if (status === 'rejected') return { text: 'Rejected', cls: 'danger' };
+            return { text: status, cls: '' };
+        }
+
+        async function updateUI() {
+            try {
+                const [{ user }, { transactions }] = await Promise.all([
+                    api.get('/account'),
+                    api.get('/user/transactions'),
+                ]);
+
+                document.getElementById('userNameTitle').innerText = `${user.full_name} Ledger`;
+
+                const TX_TYPE_META = {
+                    deposit: { icon: 'fa-arrow-down-long', color: '#10b981', tag: 'DEPOSIT' },
+                    withdrawal: { icon: 'fa-arrow-up-long', color: '#ef4444', tag: 'WITHDRAW' },
+                    shop_purchase: { icon: 'fa-bag-shopping', color: '#3b82f6', tag: 'SHOP' },
+                    ticket_purchase: { icon: 'fa-ticket', color: '#eab308', tag: 'TICKET' },
+                    auction_purchase: { icon: 'fa-gavel', color: '#f59e0b', tag: 'AUCTION' },
+                    winning: { icon: 'fa-trophy', color: '#a855f7', tag: 'WON' },
+                };
+                const MONEY_IN_TYPES = ['deposit', 'winning'];
+
+                const totalDeposited = transactions.filter(t => t.txType === 'deposit' && t.status === 'approved').reduce((s, t) => s + t.amount, 0);
+                const totalWithdrawn = transactions.filter(t => t.txType === 'withdrawal' && t.status === 'approved').reduce((s, t) => s + t.amount, 0);
+
+                document.getElementById('metricsGrid').innerHTML = `
+                    <div class="summary-card"><label>My Current Funds</label><var style="color:#8b5cf6;">${formatPHP(user.balance)}</var><i class="fa-solid fa-wallet"></i></div>
+                    <div class="summary-card"><label>Total Deposited (Approved)</label><var style="color:#10b981;">${formatPHP(totalDeposited)}</var><i class="fa-solid fa-arrow-down-long"></i></div>
+                    <div class="summary-card"><label>Total Withdrawn (Approved)</label><var style="color:#ef4444;">${formatPHP(totalWithdrawn)}</var><i class="fa-solid fa-arrow-up-long"></i></div>
+                `;
+
+                const notesBox = document.getElementById('userNotes');
+                notesBox.innerHTML = transactions.length ? transactions.map(t => {
+                    const s = statusLabel(t.status);
+                    const meta = TX_TYPE_META[t.txType] || { icon: 'fa-circle', color: '#94a3b8', tag: t.txType.toUpperCase() };
+                    const sign = MONEY_IN_TYPES.includes(t.txType) ? '+' : '-';
+                    const label = t.label || meta.tag;
+                    const gatewayNote = t.gateway ? ` via ${escapeHtml(t.gateway)}` : '';
+                    return `<div class="log-item ${s.cls}"><strong style="color:${meta.color};"><i class="fa-solid ${meta.icon}"></i> [${meta.tag}]</strong> ${escapeHtml(label)} — ${sign}${formatPHP(t.amount)}${gatewayNote} — ${s.text} <span style="color:#64748b;">(${new Date(t.created_at).toLocaleString()})</span></div>`;
+                }).join('') : `<div class="log-item" style="border-left-color:var(--text-muted)">You don't have any transaction history yet.</div>`;
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        document.addEventListener('auth-ready', updateUI);
+    </script>
+</body>
+</html>

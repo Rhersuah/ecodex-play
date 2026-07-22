@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Ban Approval</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-red:#ef4444;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:720px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .row{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:18px;margin-bottom:14px;}
+  .row .name{font-weight:700;font-size:15px;}
+  .row .meta{font-size:12px;color:var(--text-muted);margin-top:4px;}
+  .row .reason{font-size:13px;color:#cbd5e1;margin-top:8px;}
+  .badge{font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 10px;border-radius:6px;display:inline-block;margin-top:8px;background:rgba(245,158,11,0.15);color:#f59e0b;}
+  .btn-row{display:flex; gap:8px; margin-top:14px;}
+  .btn{flex:1;border:none;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;}
+  .btn-approve{background:var(--accent-red);}
+  .btn-reject{background:#334155;}
+  .empty{color:var(--text-muted);font-size:13px;font-style:italic;padding:30px;text-align:center;background:var(--bg-card);border:1px dashed var(--border-color);border-radius:16px;}
+#requestsList{max-height:520px; overflow-y:auto;}
+</style>
+</head>
+<body>
+<a href="admin-user-management.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Admin / User Management">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>Ban Approval</h1>
+    <p class="sub">Admins submit ban requests here for your final approval. Nothing is banned until you approve it.</p>
+    <div id="requestsList"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    async function loadPending() {
+        const list = document.getElementById('requestsList');
+        try {
+            const { requests } = await api.get('/superadmin/ban-requests/pending');
+            list.innerHTML = requests.length ? requests.map(r => `
+                <div class="row">
+                    <div class="name">${escapeHtml(r.user_name)} <span style="color:var(--text-muted); font-weight:400;">@${escapeHtml(r.user_username)}</span></div>
+                    <div class="meta">Requested by ${escapeHtml(r.requested_by_name)}</div>
+                    <span class="badge">${r.ban_type.toUpperCase()}${r.event_name ? ' — ' + escapeHtml(r.event_name) : ''}${r.ban_ends_at ? ' — until ' + new Date(r.ban_ends_at).toLocaleString() : ''}</span>
+                    <div class="reason">${escapeHtml(r.reason || 'No reason given.')}</div>
+                    <div class="btn-row">
+                        <button class="btn btn-approve" onclick="review(${r.id}, 'approve')"><i class="fa-solid fa-gavel"></i> Approve Ban</button>
+                        <button class="btn btn-reject" onclick="review(${r.id}, 'reject')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                    </div>
+                </div>
+            `).join('') : `<div class="empty">No ban requests waiting for approval.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function review(id, action) {
+        try {
+            await api.post(`/superadmin/ban-requests/${id}/${action}`, {});
+            showToast(action === 'approve' ? 'User banned.' : 'Request rejected.', 'success');
+            loadPending();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', loadPending);
+</script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | System Control</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:640px;margin:0 auto;}
+  .badge{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:5px 14px;border-radius:8px;background:rgba(16,185,129,0.15);color:var(--accent-green);margin-bottom:14px;}
+  h1{font-size:24px;font-weight:800;margin-bottom:8px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:28px;line-height:1.5;}
+  .current-status{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:70px 20px 40px;margin-bottom:28px;display:flex;align-items:center;gap:16px;}
+  .status-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+  .dot-online{background:#10b981;box-shadow:0 0 12px #10b981;}
+  .dot-maintenance{background:#f59e0b;box-shadow:0 0 12px #f59e0b;}
+  .dot-updating{background:#3b82f6;box-shadow:0 0 12px #3b82f6;}
+  .dot-shutdown{background:#ef4444;box-shadow:0 0 12px #ef4444;}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+  @media (max-width:520px){ .options{grid-template-columns:1fr;} }
+  .option-card{background:var(--bg-card);border:2px solid var(--border-color);border-radius:16px;padding:20px;cursor:pointer;transition:all .2s;text-align:center;}
+  .option-card:hover{border-color:#334155;}
+  .option-card.selected{border-color:var(--accent-green);background:rgba(16,185,129,0.06);}
+  .option-card i{font-size:26px;margin-bottom:10px;display:block;}
+  .option-card .name{font-weight:700;font-size:14px;}
+  .option-card .desc{font-size:11px;color:var(--text-muted);margin-top:4px;}
+  textarea{width:100%;background:#0b0f17;border:1px solid var(--border-color);border-radius:12px;padding:14px;color:#fff;font-size:14px;resize:vertical;min-height:80px;margin-bottom:20px;}
+  .btn-apply{width:100%;padding:15px;border:none;border-radius:12px;background:var(--accent-green);color:#fff;font-weight:700;font-size:14px;cursor:pointer;}
+  .btn-apply:hover{opacity:.9;}
+  .warning-box{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;padding:12px 16px;border-radius:10px;font-size:12px;margin-bottom:20px;}
+</style>
+</head>
+<body>
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<a href="super_admin.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<div class="wrap">
+    <span class="badge">Super Admin Only</span>
+    <h1>System Status Control</h1>
+    <p style="font-size:12px; margin-bottom:14px;"><a href="activity-log.html" style="color:#10b981;"><i class="fa-solid fa-list-check"></i> View Activity Log (all Admin/Super Admin actions) &rarr;</a></p>
+    <p class="sub">Control what all users see when they open E-Codex Play. Only you (Super Admin) always retain access regardless of the status set.</p>
+
+    <div class="current-status" id="currentStatusBox">
+        <div class="status-dot" id="statusDot"></div>
+        <div>
+            <div style="font-weight:700; font-size:15px;" id="statusLabel">Loading...</div>
+            <div style="font-size:12px; color:var(--text-muted);" id="statusUpdatedAt"></div>
+        </div>
+    </div>
+
+    <div class="warning-box">
+        <i class="fa-solid fa-triangle-exclamation"></i> When you select Maintenance, Updating, or Shutdown, all Admins and Users will lose access until you set it back to "Online".
+    </div>
+
+    <div class="options" id="optionsGrid"></div>
+
+    <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:8px;">Custom message (optional — shown to users on the status screen)</label>
+    <textarea id="customMessage" placeholder="e.g. Maintenance will take 30 minutes, we'll be back by 9PM."></textarea>
+
+    <button class="btn-apply" onclick="applyStatus()"><i class="fa-solid fa-check"></i> Apply Status</button>
+
+    <div style="margin-top:40px; padding-top:30px; border-top:1px solid var(--border-color);">
+        <h1 style="font-size:18px;">Dashboard Manual Overrides</h1>
+        <p class="sub">Override the numbers shown on the Super Admin dashboard for Issued Tickets, Winners, and Members Count. Leave blank to show the real automatic count.</p>
+
+        <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:6px;">Issued Tickets</label>
+        <input type="number" id="ovIssuedTickets" placeholder="Leave blank = real count" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:12px; color:#fff; margin-bottom:16px;">
+
+        <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:6px;">Winners</label>
+        <input type="number" id="ovWinners" placeholder="Leave blank = real count" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:12px; color:#fff; margin-bottom:16px;">
+
+        <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:6px;">Members Count</label>
+        <input type="number" id="ovMembers" placeholder="Leave blank = real count" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:12px; color:#fff; margin-bottom:16px;">
+
+        <button class="btn-apply" onclick="applyOverrides()"><i class="fa-solid fa-check"></i> Save Overrides</button>
+    </div>
+</div>
+
+<script>
+    const OPTIONS = [
+        { value: 'online', icon: 'fa-circle-check', color: '#10b981', name: 'Online', desc: 'Normal, open to everyone' },
+        { value: 'maintenance', icon: 'fa-gear', color: '#f59e0b', name: 'Maintenance', desc: 'Fixing the system' },
+        { value: 'updating', icon: 'fa-cloud-arrow-down', color: '#3b82f6', name: 'Updating', desc: 'May bagong update' },
+        { value: 'shutdown', icon: 'fa-power-off', color: '#ef4444', name: 'Shutdown', desc: 'Pansamantalang offline' },
+    ];
+
+    let selectedStatus = 'online';
+
+    function renderOptions() {
+        document.getElementById('optionsGrid').innerHTML = OPTIONS.map(o => `
+            <div class="option-card ${selectedStatus === o.value ? 'selected' : ''}" onclick="selectStatus('${o.value}')">
+                <i class="fa-solid ${o.icon}" style="color:${o.color};"></i>
+                <div class="name">${o.name}</div>
+                <div class="desc">${o.desc}</div>
+            </div>
+        `).join('');
+    }
+
+    function selectStatus(value) {
+        selectedStatus = value;
+        renderOptions();
+    }
+
+    async function loadCurrentStatus() {
+        try {
+            const data = await api.get('/superadmin/system-status');
+            selectedStatus = data.status;
+            document.getElementById('statusDot').className = 'status-dot dot-' + data.status;
+            document.getElementById('statusLabel').textContent = 'Current Status: ' + data.status.toUpperCase();
+            document.getElementById('statusUpdatedAt').textContent = data.updated_at ? ('Last updated: ' + new Date(data.updated_at).toLocaleString()) : '';
+            document.getElementById('customMessage').value = data.message || '';
+            renderOptions();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function applyStatus() {
+        try {
+            const message = document.getElementById('customMessage').value.trim();
+            await api.patch('/superadmin/system-status', { status: selectedStatus, message });
+            showToast('System status updated!', 'success');
+            loadCurrentStatus();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadOverrides() {
+        try {
+            const data = await api.get('/superadmin/dashboard-overrides');
+            document.getElementById('ovIssuedTickets').value = data.issued_tickets_override ?? '';
+            document.getElementById('ovWinners').value = data.winners_override ?? '';
+            document.getElementById('ovMembers').value = data.members_override ?? '';
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function applyOverrides() {
+        const issuedTickets = document.getElementById('ovIssuedTickets').value;
+        const winners = document.getElementById('ovWinners').value;
+        const members = document.getElementById('ovMembers').value;
+        try {
+            await api.patch('/superadmin/dashboard-overrides', {
+                issuedTickets: issuedTickets === '' ? null : Number(issuedTickets),
+                winners: winners === '' ? null : Number(winners),
+                members: members === '' ? null : Number(members),
+            });
+            showToast('Dashboard overrides saved!', 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', () => { loadCurrentStatus(); loadOverrides(); });
+</script>
+
+</body>
+</html>

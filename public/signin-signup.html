@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E - Codex Play | Authentication</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #0b0f17;
+            --bg-card: #131926;
+            --bg-panel: #0e1420;
+            --accent-green: #22c55e;
+            --accent-green-hover: #16a34a;
+            --accent-green-dim: rgba(34,197,94,0.08);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --border-color: #1e293b;
+            --input-bg: #0e1420;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* =============================
+           DESKTOP LAYOUT (≥768px)
+           ============================= */
+        .desktop-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Left Panel */
+        .left-panel {
+            flex: 1;
+            background: linear-gradient(145deg, #0d1a10 0%, #091510 50%, #0b0f17 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 60px 64px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            width: 480px;
+            height: 480px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(34,197,94,0.12) 0%, transparent 70%);
+            top: -100px;
+            left: -120px;
+            pointer-events: none;
+        }
+
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(34,197,94,0.07) 0%, transparent 70%);
+            bottom: 60px;
+            right: -60px;
+            pointer-events: none;
+        }
+
+        .panel-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .panel-brand .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .panel-brand span { color: var(--text-muted); font-weight: 400; }
+
+        .panel-headline {
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1.15;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.5px;
+        }
+
+        .panel-headline .highlight {
+            color: var(--accent-green);
+        }
+
+        .panel-desc {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            max-width: 340px;
+            margin-bottom: 48px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .feature-list li .feat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--accent-green-dim);
+            border: 1px solid rgba(34,197,94,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-green);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .panel-footer {
+            margin-top: auto;
+            font-size: 12px;
+            color: #334155;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Right Panel (Form area) */
+        .right-panel {
+            width: 480px;
+            flex-shrink: 0;
+            background-color: var(--bg-card);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 48px 44px;
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        .right-panel .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .right-panel .back-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .right-panel .back-btn:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .lang-dropdown {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .form-header {
+            margin-bottom: 32px;
+        }
+
+        .form-header h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .form-header p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i.field-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--accent-green);
+            font-size: 14px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 13px 16px 13px 42px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+        }
+
+        .input-wrapper .toggle-password {
+            position: absolute;
+            right: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .input-wrapper .toggle-password:hover { color: var(--text-main); }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 12px 0 22px;
+            font-size: 13px;
+        }
+
+        .custom-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            user-select: none;
+            flex-wrap: wrap;
+        }
+
+        .custom-checkbox input { display: none; }
+
+        .checkbox-box {
+            width: 17px;
+            height: 17px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .custom-checkbox input:checked + .checkbox-box {
+            background-color: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .checkbox-box i { color: #fff; font-size: 10px; display: none; }
+        .custom-checkbox input:checked + .checkbox-box i { display: block; }
+        .custom-checkbox a { color: var(--accent-green); text-decoration: none; }
+
+        .forgot-link {
+            color: var(--accent-green);
+            text-decoration: none;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background-color: var(--accent-green);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-bottom: 24px;
+        }
+
+        .submit-btn:hover { background-color: var(--accent-green-hover); }
+        .submit-btn:active { transform: scale(0.99); }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .divider span {
+            padding: 0 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .social-btn {
+            width: 100%;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 13px;
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .social-btn:hover {
+            background-color: var(--bg-panel);
+            border-color: #334155;
+        }
+
+        .social-btn.google i { color: #ea4335; }
+        .social-btn.facebook i { color: #1877f2; }
+
+        .switch-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .switch-footer a {
+            color: var(--accent-green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* View toggle */
+        .auth-view { display: none; }
+        .auth-view.active { display: block; }
+
+        /* =============================
+           MOBILE LAYOUT (<768px)
+           ============================= */
+        @media (max-width: 767px) {
+            .desktop-wrapper { display: block; }
+
+            .left-panel { display: none; }
+
+            .right-panel {
+                width: 100%;
+                min-height: 100vh;
+                border-left: none;
+                padding: 28px 24px 40px;
+                justify-content: flex-start;
+            }
+
+            .right-panel .top-bar {
+                margin-bottom: 28px;
+            }
+
+            /* Mobile brand pill at top */
+            .mobile-brand {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                font-size: 20px;
+                font-weight: 700;
+                margin-bottom: 28px;
+            }
+
+            .mobile-brand .logo-icon {
+                width: 36px;
+                height: 36px;
+                background: transparent;
+                border-radius: 9px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+            }
+
+            .mobile-brand span { color: var(--text-muted); font-weight: 400; }
+
+            .form-header h2 { font-size: 22px; }
+
+            .submit-btn { padding: 15px; }
+
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+
+        /* Hide mobile brand on desktop */
+        .mobile-brand { display: none; }
+
+        /* =============================
+           DECORATIVE GRID (desktop bg)
+           ============================= */
+        .left-panel .grid-lines {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(34,197,94,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34,197,94,0.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+        }
+
+        /* Stats row on left panel */
+        .stats-row {
+            display: flex;
+            gap: 24px;
+            margin-top: 48px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-item { }
+
+        .stat-item .stat-num {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-item .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Waiting animation used on Verify Email and Awaiting Approval screens */
+        /* Verify Email / Awaiting Approval — everything centered, including
+           the title, message, and the loading spinner below it. */
+        #verify-email-view, #pending-approval-view {
+            text-align: center;
+        }
+        #verify-email-view .form-header, #pending-approval-view .form-header {
+            text-align: center;
+        }
+        #verify-email-view .form-group {
+            text-align: left; /* the code input itself stays normally aligned */
+        }
+
+        .verify-spinner {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .verify-spinner::before, .verify-spinner::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid transparent;
+        }
+        .verify-spinner::before {
+            border-top-color: #10b981;
+            border-right-color: #10b981;
+            animation: verify-spin 1.1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+        }
+        .verify-spinner::after {
+            inset: 10px;
+            border-bottom-color: rgba(16,185,129,0.35);
+            border-left-color: rgba(16,185,129,0.35);
+            animation: verify-spin 1.6s linear infinite reverse;
+        }
+        @keyframes verify-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="desktop-wrapper">
+
+    <!-- ========================
+         LEFT PANEL (Desktop only)
+         ======================== -->
+    <div class="left-panel">
+        <div class="grid-lines"></div>
+
+        <div class="panel-brand">
+            <img src="/assets/images/logo-full.png" style="height:120px; width:auto; object-fit:contain;" alt="E-Codex Play">
+        </div>
+
+        <div class="panel-headline">
+            Join the game.<br>
+            <span class="highlight">Win for real.</span>
+        </div>
+
+        <p class="panel-desc">
+            E-Codex Play is a real-money raffle and rewards platform. Drop your tickets into a live pool, watch the wheel decide the winner, and cash out straight to your wallet — everything here is fair, transparent, and yours to win.
+        </p>
+
+        <ul class="feature-list">
+            <li>
+                <div class="feat-icon"><i class="fa-solid fa-ticket"></i></div>
+                Buy ECP tickets and drop them into live raffle draws
+            </li>
+            <li>
+                <div class="feat-icon"><i class="fa-solid fa-gavel"></i></div>
+                Bid on special limited items in the live Auction
+            </li>
+            <li>
+                <div class="feat-icon"><i class="fa-solid fa-gem"></i></div>
+                Collect daily items from ongoing Collection Events
+            </li>
+            <li>
+                <div class="feat-icon"><i class="fa-solid fa-bag-shopping"></i></div>
+                Shop real items and gold-tier tickets, delivered to your door
+            </li>
+        </ul>
+
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-num" id="statRegisteredPlayers">—</div>
+                <div class="stat-label">Registered Players</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="statPrizesAwarded">—</div>
+                <div class="stat-label">Prizes Awarded</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">100%</div>
+                <div class="stat-label">Legit & Verified</div>
+            </div>
+        </div>
+
+        <div class="panel-footer" style="margin-top: 60px;">
+            © 2025 E-Codex Play. All rights reserved.
+        </div>
+    </div>
+
+    <!-- ========================
+         RIGHT PANEL (Form)
+         ======================== -->
+    <div class="right-panel">
+
+        <!-- SIGN IN VIEW -->
+        <div id="signin-view" class="auth-view active">
+            <div class="top-bar">
+                <span style="font-size:13px; color: var(--text-muted);">Welcome back 👋</span>
+            </div>
+
+            <!-- Mobile-only brand -->
+            <div class="mobile-brand">
+                <img src="/assets/images/logo-full.png" style="height:115px; width:auto; object-fit:contain;" alt="E-Codex Play">
+            </div>
+
+            <div class="form-header">
+                <h2 data-i18n="signinTitle">Sign In</h2>
+                <p data-i18n="signinSubtitle">Log in to join raffles, events &amp; the shop</p>
+            </div>
+
+            <div id="signin-error" style="display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:13px; padding:10px 14px; border-radius:10px; margin-bottom:16px;"></div>
+
+            <form id="signin-form" onsubmit="handleSignin(event)">
+                <div class="form-group">
+                    <label data-i18n="emailOrUsername">Email or Username</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-user field-icon"></i>
+                        <input type="text" id="signin-identifier" placeholder="Enter your email or username" data-i18n-placeholder="emailOrUsernamePh" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock field-icon"></i>
+                        <input type="password" id="signin-pass" placeholder="Enter your password" data-i18n-placeholder="passwordPh" required>
+                        <i class="fa-regular fa-eye toggle-password" onclick="togglePass('signin-pass', this)"></i>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" checked>
+                        <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                        <span data-i18n="rememberMe">Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-link" data-i18n="forgotPassword">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="submit-btn" id="signin-submit-btn" data-i18n="logIn">Log In</button>
+            </form>
+
+            <div class="divider"><span data-i18n="orContinueWith">or continue with</span></div>
+
+            <button class="social-btn google" onclick="loginWithGoogle()">
+                <i class="fa-brands fa-google"></i> Google
+            </button>
+            <button class="social-btn facebook" onclick="loginWithFacebook()">
+                <i class="fa-brands fa-facebook-f"></i> Facebook
+            </button>
+
+            <div class="switch-footer">
+                <span data-i18n="noAccount">Don't have an account?</span> <a href="#" onclick="switchView('signup-view')" data-i18n="signUp">Sign Up</a>
+            </div>
+        </div>
+
+        <!-- SIGN UP VIEW -->
+        <div id="signup-view" class="auth-view">
+            <div class="top-bar">
+                <button class="back-btn" onclick="switchView('signin-view')" title="Back to Sign In">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+            </div>
+
+            <!-- Mobile-only brand -->
+            <div class="mobile-brand">
+                <img src="/assets/images/logo-full.png" style="height:115px; width:auto; object-fit:contain;" alt="E-Codex Play">
+            </div>
+
+            <div class="form-header">
+                <h2 data-i18n="signupTitle">Create Account</h2>
+                <p data-i18n="signupSubtitle">Create an account to join raffles, events &amp; the shop</p>
+            </div>
+
+            <div id="signup-error" style="display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:13px; padding:10px 14px; border-radius:10px; margin-bottom:16px;"></div>
+
+            <form id="signup-form" onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <label data-i18n="fullName">Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-user field-icon"></i>
+                        <input type="text" id="signup-fullname" placeholder="Enter your full name" data-i18n-placeholder="fullNamePh" required>
+                    </div>
+                    <p style="font-size:11px; color:#f59e0b; margin-top:6px;"><i class="fa-solid fa-circle-exclamation"></i> Please use your real or legal name — this must match your uploaded ID.</p>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="email">Email</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-envelope field-icon"></i>
+                        <input type="email" id="signup-email" placeholder="Enter your email" data-i18n-placeholder="emailPh" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="mobileNumber">Mobile Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-mobile-screen field-icon"></i>
+                        <input type="tel" id="signup-mobile" placeholder="+63 9XX XXX XXXX" required style="padding-left: 42px;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-location-dot field-icon"></i>
+                        <input type="text" id="signup-address" placeholder="Your complete address" required>
+                    </div>
+                    <p style="font-size:11px; color:#f59e0b; margin-top:6px;"><i class="fa-solid fa-circle-exclamation"></i> Please make sure this is accurate — it will be used for future transactions such as order delivery.</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Valid ID (for verification)</label>
+                    <input type="file" id="signup-id" accept="image/png,image/jpeg,image/webp" required style="width:100%; background:#0b0f17; border:1px solid var(--border-color, #1e293b); border-radius:10px; padding:10px 12px; color:#fff; font-size:13px;">
+                    <p style="font-size:11px; color:#64748b; margin-top:6px;">Upload 1 valid ID. This is reviewed as part of your account approval, before your account becomes active.</p>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="username">Username</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-at field-icon"></i>
+                        <input type="text" id="signup-username" placeholder="Choose a username" data-i18n-placeholder="usernamePh" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock field-icon"></i>
+                        <input type="password" id="signup-pass" placeholder="Create a password" data-i18n-placeholder="createPasswordPh" required minlength="8">
+                        <i class="fa-regular fa-eye toggle-password" onclick="togglePass('signup-pass', this)"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="confirmPassword">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock field-icon"></i>
+                        <input type="password" id="signup-confirm" placeholder="Confirm your password" data-i18n-placeholder="confirmPasswordPh" required minlength="8">
+                        <i class="fa-regular fa-eye toggle-password" onclick="togglePass('signup-confirm', this)"></i>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" required>
+                        <div class="checkbox-box"><i class="fa-solid fa-check"></i></div>
+                        <span><span data-i18n="agreeToThe">I agree to the</span> <a href="#" onclick="openLegalModal('terms'); return false;" data-i18n="terms">Terms</a> <span data-i18n="andThe">and</span> <a href="#" onclick="openLegalModal('privacy'); return false;" data-i18n="privacyPolicy">Privacy Policy</a></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="submit-btn" id="signup-submit-btn" data-i18n="createAccount">Create Account</button>
+            </form>
+
+            <div class="switch-footer">
+                Already have an account? <a href="#" onclick="switchView('signin-view')">Log In</a>
+            </div>
+        </div>
+
+        <!-- ONE-TIME ACCOUNT SETUP VIEW (shown when a temp credential, e.g. the
+             one-time Super Admin login, is used for the first time) -->
+        <div id="setup-view" class="auth-view">
+            <div class="mobile-brand">
+                <img src="/assets/images/logo-full.png" style="height:115px; width:auto; object-fit:contain;" alt="E-Codex Play">
+            </div>
+
+            <div class="form-header">
+                <h2 id="setup-title">Update Your Profile</h2>
+                <p id="setup-subtitle">This is a one-time setup. Please set your permanent username and password, and confirm your contact information.</p>
+            </div>
+
+            <div id="setup-error" style="display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:13px; padding:10px 14px; border-radius:10px; margin-bottom:16px;"></div>
+
+            <form id="setup-form" onsubmit="handleCompleteSetup(event)">
+                <div class="form-group" id="setup-fullname-group">
+                    <label>Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-id-card field-icon"></i>
+                        <input type="text" id="setup-fullname" placeholder="Juan Dela Cruz">
+                    </div>
+                </div>
+                <div class="form-group" id="setup-email-group">
+                    <label>Email</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-envelope field-icon"></i>
+                        <input type="email" id="setup-email" placeholder="you@example.com">
+                    </div>
+                </div>
+                <div class="form-group" id="setup-mobile-group">
+                    <label>Mobile Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-mobile-screen field-icon"></i>
+                        <input type="tel" id="setup-mobile" placeholder="+63 9XX XXX XXXX" style="padding-left: 42px;">
+                    </div>
+                </div>
+                <div class="form-group" id="setup-username-group">
+                    <label>New Permanent Username</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-at field-icon"></i>
+                        <input type="text" id="setup-username" placeholder="Choose your username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock field-icon"></i>
+                        <input type="password" id="setup-pass" placeholder="At least 10 characters" required minlength="10">
+                        <i class="fa-regular fa-eye toggle-password" onclick="togglePass('setup-pass', this)"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock field-icon"></i>
+                        <input type="password" id="setup-confirm" placeholder="Repeat your password" required minlength="10">
+                        <i class="fa-regular fa-eye toggle-password" onclick="togglePass('setup-confirm', this)"></i>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn" id="setup-submit-btn">Complete Setup</button>
+            </form>
+        </div>
+
+        <!-- EMAIL VERIFICATION VIEW -->
+        <div id="verify-email-view" class="auth-view">
+            <div class="form-header">
+                <h2>Verify Your Email</h2>
+                <p id="verify-email-sub">Waiting for your email to be verified.</p>
+            </div>
+
+            <div id="verify-error" style="display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; font-size:13px; padding:10px 14px; border-radius:10px; margin-bottom:16px;"></div>
+
+            <!-- Shown while waiting for System Administrator review (tier 1 / tier 2) -->
+            <div id="verify-waiting-box" style="text-align:center; padding:30px 10px;">
+                <div class="verify-spinner"></div>
+                <p id="verify-waiting-text" style="margin-top:28px; font-size:13px; color:#94a3b8; line-height:1.6;">Once your email is verified, the System Administrator will send the code through your email address.</p>
+            </div>
+
+            <!-- Shown once the code has been released -->
+            <form id="verify-email-form" onsubmit="handleVerifyEmail(event)" style="display:none;">
+                <div class="form-group">
+                    <label>Verification Code</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-key field-icon"></i>
+                        <input type="text" id="verify-code" placeholder="Enter 6-digit code" maxlength="6" required style="letter-spacing:4px; font-weight:700;">
+                    </div>
+                    <p style="font-size:12px; color:#10b981; margin-top:8px;"><i class="fa-solid fa-circle-check"></i> Your code has been released — it's pre-filled above. Just confirm to continue.</p>
+                </div>
+                <button type="submit" class="submit-btn" id="verify-submit-btn">Verify Email</button>
+            </form>
+        </div>
+
+        <!-- PENDING APPROVAL VIEW -->
+        <div id="pending-approval-view" class="auth-view">
+            <div class="form-header">
+                <h2><i class="fa-solid fa-hourglass-half" style="color:#f59e0b;"></i> Awaiting Approval</h2>
+                <p>Your email is verified! Your account is now waiting for a System Administrator to approve it. This is a quick manual check — please check back soon.</p>
+            </div>
+            <div style="text-align:center; padding:10px 10px 20px;">
+                <div class="verify-spinner"></div>
+            </div>
+            <button class="submit-btn" onclick="switchView('signin-view')">Back to Sign In</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ========================
+     LEGAL MODAL (Terms of Service / Privacy Policy)
+     ======================== -->
+<div id="legalModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#131926; border:1px solid #1e293b; border-radius:20px; max-width:600px; width:100%; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,0.6);">
+        <div style="padding:20px 24px; border-bottom:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center;">
+            <h3 id="legalModalTitle" style="font-size:16px; font-weight:700; color:#fff;">Terms of Service</h3>
+            <button onclick="closeLegalModal()" style="background:none; border:none; color:#94a3b8; font-size:20px; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+        <div id="legalModalBody" style="padding:22px 24px; overflow-y:auto; color:#cbd5e1; font-size:13px; line-height:1.7;"></div>
+        <div style="padding:16px 24px; border-top:1px solid #1e293b;">
+            <button onclick="closeLegalModal()" style="width:100%; padding:12px; background:#10b981; border:none; border-radius:10px; color:#fff; font-weight:600; cursor:pointer;">Understood</button>
+        </div>
+    </div>
+</div>
+
+<script src="/assets/js/api.js"></script>
+<script>
+    const LEGAL_CONTENT = {
+        en: {
+            terms: {
+                title: "Terms and Conditions",
+                body: `
+                    <p>By registering, accessing, or using E-Codex Play, you acknowledge that you have read, understood, and agreed to comply with these Terms and Conditions. If you do not agree with any part of these terms, you should not use the platform.</p>
+
+                    <p style="margin-top:12px;">E-Codex Play is an online raffle draw and shopping platform that allows users to purchase raffle tickets, participate in online raffle activities, and purchase products available through the platform. The platform may also organize events, community projects, promotional activities, and charitable programs which will be announced through the Events and Announcements section.</p>
+
+                    <p style="margin-top:12px;">All users are required to provide accurate, complete, and truthful information during account registration and throughout their use of the platform. Users agree to keep their information updated at all times and understand that inaccurate or misleading information may result in account restrictions or termination.</p>
+
+                    <p style="margin-top:12px;">To protect the integrity of the platform and its members, E-Codex Play may require users to submit valid identification documents, proof of address, payment account verification, photographs, and other supporting documents whenever necessary. These requirements may apply during registration, deposits, withdrawals, prize claims, account reviews, and security investigations.</p>
+
+                    <p style="margin-top:12px;">All deposits, withdrawals, ticket purchases, product purchases, prize claims, and other financial transactions are subject to a two-tier approval process. Transactions will only appear in the user's dashboard after all required reviews, validations, and approvals have been completed.</p>
+
+                    <p style="margin-top:12px;"><strong>Platform Service Fee.</strong> A service fee applies to deposits and withdrawals, shown to the user before the transaction is submitted. All fees collected are used to fund the operation and upkeep of the platform, including system maintenance, domain and hosting costs, and platform security. The current fee percentage can be reviewed at the time of each transaction.</p>
+
+                    <p style="margin-top:12px;">Users agree that all raffle entries, transactions, and prize claims are subject to verification. E-Codex Play reserves the right to investigate suspicious activities and request additional documentation whenever necessary. Prize claims may be delayed, suspended, or canceled if verification requirements are not successfully completed.</p>
+
+                    <p style="margin-top:12px;">Users must not submit false information, forged documents, stolen identities, manipulated records, or misleading declarations. Users are also prohibited from creating multiple fraudulent accounts, attempting unauthorized access to the platform, manipulating raffle results, using automated systems to gain unfair advantages, or engaging in any activity that may compromise the security and fairness of the platform.</p>
+
+                    <p style="margin-top:12px;">E-Codex Play reserves the right to suspend, restrict, investigate, or permanently terminate any account involved in fraudulent activities, document forgery, identity misrepresentation, abuse of platform services, or violations of these Terms and Conditions. Any tickets, winnings, rewards, benefits, or balances associated with such violations may be canceled, forfeited, or permanently revoked without compensation.</p>
+
+                    <p style="margin-top:12px;">Users acknowledge that all information, announcements, promotional activities, charitable projects, outreach programs, platform updates, and policies will be published through official E-Codex Play communication channels, including the Events and Announcements section. It is the responsibility of users to stay informed about such updates.</p>
+
+                    <p style="margin-top:12px;">All content, logos, graphics, trademarks, software, and materials displayed on the platform are the property of E-Codex Play unless otherwise stated. Unauthorized copying, reproduction, distribution, or modification of platform content is strictly prohibited.</p>
+
+                    <p style="margin-top:12px;">While E-Codex Play strives to provide secure and uninterrupted services, the platform shall not be held liable for interruptions caused by internet failures, technical difficulties, maintenance activities, third-party service disruptions, or circumstances beyond its reasonable control.</p>
+
+                    <p style="margin-top:12px;">E-Codex Play reserves the right to modify, update, or revise these Terms and Conditions at any time. Continued use of the platform following any changes constitutes acceptance of the revised terms.</p>
+
+                    <p style="margin-top:12px;"><em>Platform service fees may be updated with prior notice.</em></p>
+
+                    <p style="margin-top:16px;"><strong>Disclaimer</strong><br>
+                    E-Codex Play reserves the right to suspend, restrict, investigate, or permanently terminate any account involved in fraud, false representation, identity manipulation, document forgery, or any activity that threatens the integrity, security, fairness, and transparency of the platform. All users are expected to cooperate with verification procedures and uphold the principles of honesty, accountability, and responsible participation.</p>
+                `,
+            },
+            privacy: {
+                title: "Privacy Policy",
+                body: `
+                    <p>E-Codex Play respects and values the privacy of every user and is committed to protecting all personal information collected through the platform. By using the platform, users consent to the collection, storage, processing, and use of their information in accordance with this Privacy Policy.</p>
+
+                    <p style="margin-top:12px;">The platform may collect personal information including full name, date of birth, residential address, email address, mobile number, government-issued identification details, photographs, payment information, transaction records, account activity, device information, IP addresses, and other data necessary to provide platform services.</p>
+
+                    <p style="margin-top:12px;">The information collected is used to facilitate account registration, identity verification, transaction validation, fraud prevention, security monitoring, prize claim processing, customer support, regulatory compliance, and platform improvement.</p>
+
+                    <p style="margin-top:12px;">Users are responsible for ensuring that all information and documents submitted to E-Codex Play are accurate, complete, current, and authentic. Any false, misleading, incomplete, altered, or fraudulent information may result in account suspension, account termination, cancellation of winnings, loss of benefits, and other disciplinary actions deemed necessary by the platform.</p>
+
+                    <p style="margin-top:12px;">E-Codex Play is committed to safeguarding all personal information provided by users. Reasonable administrative, technical, and security measures are implemented to prevent unauthorized access, disclosure, alteration, misuse, or loss of data. All information submitted to the system administrators and authorized personnel will be handled with confidentiality and professional responsibility.</p>
+
+                    <p style="margin-top:12px;">Users may be required to submit additional documents and supporting evidence for account verification, deposits, withdrawals, ticket purchases, product purchases, prize claims, fraud investigations, and compliance reviews. Failure to provide requested information may result in delays, restrictions, or denial of certain platform services.</p>
+
+                    <p style="margin-top:12px;">Any user who intentionally provides fake information, forged documents, falsified records, stolen identities, or any misleading information for personal gain shall be subject to permanent account suspension or termination. E-Codex Play reserves the right to invalidate all associated raffle tickets, cancel all winnings and rewards, freeze pending transactions, and permanently forfeit any funds, balances, benefits, or claims connected to such fraudulent activities.</p>
+
+                    <p style="margin-top:12px;">E-Codex Play does not sell personal information to third parties. Information may only be shared when required by law, requested by a government authority, necessary for fraud investigations, required by payment processors or verification providers, or necessary to protect the rights, security, and lawful interests of the platform and its users.</p>
+
+                    <p style="margin-top:12px;">The platform may use cookies, analytics tools, system logs, and monitoring technologies to improve user experience, strengthen security, monitor performance, and detect suspicious activities. By continuing to use the platform, users consent to such monitoring practices.</p>
+
+                    <p style="margin-top:12px;">Personal information may be retained for as long as reasonably necessary to fulfill business, legal, compliance, fraud prevention, and security purposes. Information may continue to be retained after account closure when required by applicable laws or legitimate business interests.</p>
+
+                    <p style="margin-top:12px;">Users may request access to their personal information, correction of inaccurate records, or updates to their account details, subject to applicable laws and verification requirements.</p>
+
+                    <p style="margin-top:12px;">E-Codex Play reserves the right to modify this Privacy Policy at any time. Any updates will take effect upon publication on the platform, and continued use of the services shall constitute acceptance of the updated Privacy Policy.</p>
+
+                    <p style="margin-top:12px;">By registering an account and using E-Codex Play, you acknowledge that you have read, understood, and agreed to both the Terms and Conditions and the Privacy Policy of the platform.</p>
+                `,
+            },
+        },
+    };
+
+    function openLegalModal(type) {
+        const content = LEGAL_CONTENT.en[type];
+        if (!content) return;
+        document.getElementById('legalModalTitle').textContent = content.title;
+        document.getElementById('legalModalBody').innerHTML = content.body;
+        document.getElementById('legalModalOverlay').style.display = 'flex';
+    }
+
+    function closeLegalModal() {
+        document.getElementById('legalModalOverlay').style.display = 'none';
+    }
+</script>
+<script>
+    async function loadPublicStats() {
+        try {
+            const res = await fetch('/api/public-stats');
+            const data = await res.json();
+            const regEl = document.getElementById('statRegisteredPlayers');
+            const prizeEl = document.getElementById('statPrizesAwarded');
+            if (regEl) regEl.textContent = data.registeredPlayers >= 1000 ? (data.registeredPlayers / 1000).toFixed(1) + 'K+' : String(data.registeredPlayers);
+            if (prizeEl) prizeEl.textContent = data.prizesAwarded >= 1000 ? (data.prizesAwarded / 1000).toFixed(1) + 'K+' : String(data.prizesAwarded);
+        } catch (e) { /* non-fatal — stats just stay blank */ }
+    }
+    document.addEventListener('DOMContentLoaded', loadPublicStats);
+
+    function switchView(viewId) {
+        document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        document.querySelector('.right-panel').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function togglePass(fieldId, icon) {
+        const field = document.getElementById(fieldId);
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            field.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+
+    const ROLE_HOME = {
+        super_admin: '/super-admin/super_admin.html',
+        admin: '/admin/admin.html',
+        user: '/user/user.html',
+    };
+
+    function setBtnLoading(btnId, loading, label) {
+        const btn = document.getElementById(btnId);
+        btn.disabled = loading;
+        btn.innerHTML = loading ? `<i class="fa-solid fa-spinner fa-spin"></i> Please wait...` : label;
+    }
+
+    function showFormError(elId, message) {
+        const el = document.getElementById(elId);
+        el.textContent = message;
+        el.style.display = 'block';
+    }
+    function hideFormError(elId) {
+        document.getElementById(elId).style.display = 'none';
+    }
+
+    async function handleSignin(event) {
+        event.preventDefault();
+        hideFormError('signin-error');
+        const identifier = document.getElementById('signin-identifier').value.trim();
+        const password = document.getElementById('signin-pass').value;
+
+        setBtnLoading('signin-submit-btn', true);
+        try {
+            const data = await api.post('/auth/login', { identifier, password });
+            if (data.requiresSetup) {
+                setToken(data.setupToken);
+                configureSetupView(data.passwordResetOnly);
+                switchView('setup-view');
+                return;
+            }
+            setToken(data.token);
+            if (data.user.role !== 'super_admin') {
+                try {
+                    const statusRes = await fetch('/api/system-status');
+                    const statusData = await statusRes.json();
+                    if (statusData.status && statusData.status !== 'online') {
+                        window.location.href = '/status.html';
+                        return;
+                    }
+                } catch (e) { /* if the check fails, fall through to normal login */ }
+            }
+            window.location.href = ROLE_HOME[data.user.role] || '/user/user.html';
+        } catch (err) {
+            if (err.code === 'PENDING_EMAIL_VERIFICATION') {
+                pendingVerifyEmail = err.email;
+                document.getElementById('verify-waiting-box').style.display = 'block';
+                document.getElementById('verify-email-form').style.display = 'none';
+                switchView('verify-email-view');
+                startCodeStatusPolling();
+                return;
+            }
+            if (err.code === 'PENDING_APPROVAL') {
+                switchView('pending-approval-view');
+                return;
+            }
+            showFormError('signin-error', err.message);
+        } finally {
+            setBtnLoading('signin-submit-btn', false, 'Log In');
+        }
+    }
+
+    let pendingVerifyEmail = null;
+
+    let pendingSignupFormData = null;
+    let selfieMediaStream = null;
+    let capturedSelfieBlob = null;
+
+    async function handleSignup(event) {
+        event.preventDefault();
+        hideFormError('signup-error');
+        const fullName = document.getElementById('signup-fullname').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const mobile = document.getElementById('signup-mobile').value.trim();
+        const address = document.getElementById('signup-address').value.trim();
+        const idFile = document.getElementById('signup-id').files[0];
+        const username = document.getElementById('signup-username').value.trim();
+        const password = document.getElementById('signup-pass').value;
+        const confirmPassword = document.getElementById('signup-confirm').value;
+
+        if (password !== confirmPassword) {
+            showFormError('signup-error', 'Password and confirm password do not match.');
+            return;
+        }
+        if (!idFile) {
+            showFormError('signup-error', 'Please upload a valid ID for verification.');
+            return;
+        }
+
+        // Signup ALWAYS creates a 'user' role account — there is no way to
+        // request admin/super_admin here. Admin accounts can only be
+        // created by a super admin from the Admin Management screen.
+        // New accounts wait for a 2-tier manual staff review (Admin, then
+        // Super Admin) before their verification code is ever revealed —
+        // see startCodeStatusPolling below.
+        pendingSignupFormData = { fullName, email, mobile, address, idFile, username, password, confirmPassword };
+        openSelfieModal();
+    }
+
+    async function openSelfieModal() {
+        document.getElementById('selfieModal').style.display = 'flex';
+        document.getElementById('selfieCaptureRow').style.display = 'flex';
+        document.getElementById('selfieConfirmRow').style.display = 'none';
+        document.getElementById('selfieVideo').style.display = 'block';
+        document.getElementById('selfieCanvas').style.display = 'none';
+        document.getElementById('selfieCameraError').style.display = 'none';
+        capturedSelfieBlob = null;
+
+        try {
+            selfieMediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+            document.getElementById('selfieVideo').srcObject = selfieMediaStream;
+        } catch (e) {
+            document.getElementById('selfieCameraError').style.display = 'flex';
+            document.getElementById('selfieCameraError').innerHTML = '<span><i class="fa-solid fa-triangle-exclamation"></i><br>Camera access is required to continue. Please allow camera permission and try again.</span>';
+            document.getElementById('selfieCaptureRow').style.display = 'none';
+        }
+    }
+
+    function stopSelfieCamera() {
+        if (selfieMediaStream) {
+            selfieMediaStream.getTracks().forEach(track => track.stop());
+            selfieMediaStream = null;
+        }
+    }
+
+    function closeSelfieModal() {
+        stopSelfieCamera();
+        document.getElementById('selfieModal').style.display = 'none';
+    }
+
+    function captureSelfie() {
+        const video = document.getElementById('selfieVideo');
+        const canvas = document.getElementById('selfieCanvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        // Mirror the capture to match what the user saw in the live preview.
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+            capturedSelfieBlob = blob;
+        }, 'image/jpeg', 0.9);
+
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        stopSelfieCamera();
+        document.getElementById('selfieCaptureRow').style.display = 'none';
+        document.getElementById('selfieConfirmRow').style.display = 'flex';
+    }
+
+    function retakeSelfie() {
+        document.getElementById('selfieConfirmRow').style.display = 'none';
+        openSelfieModal();
+    }
+
+    async function confirmSelfieAndSubmit() {
+        if (!capturedSelfieBlob) {
+            showFormError('signup-error', 'Please capture a selfie photo first.');
+            return;
+        }
+        setBtnLoading('selfieConfirmBtn', true);
+        try {
+            const d = pendingSignupFormData;
+            const form = new FormData();
+            form.append('fullName', d.fullName);
+            form.append('email', d.email);
+            form.append('mobile', d.mobile);
+            form.append('address', d.address);
+            form.append('username', d.username);
+            form.append('password', d.password);
+            form.append('confirmPassword', d.confirmPassword);
+            form.append('idPhoto', d.idFile);
+            form.append('selfiePhoto', capturedSelfieBlob, 'selfie.jpg');
+            const data = await api.post('/auth/signup', form, true);
+            closeSelfieModal();
+            pendingVerifyEmail = data.email;
+            document.getElementById('verify-waiting-box').style.display = 'block';
+            document.getElementById('verify-email-form').style.display = 'none';
+            switchView('verify-email-view');
+            startCodeStatusPolling();
+        } catch (err) {
+            closeSelfieModal();
+            showFormError('signup-error', err.message);
+        } finally {
+            setBtnLoading('selfieConfirmBtn', false, '<i class="fa-solid fa-check"></i> Confirm & Create Account');
+        }
+    }
+
+    let codeStatusPollInterval = null;
+
+    function startCodeStatusPolling() {
+        if (codeStatusPollInterval) clearInterval(codeStatusPollInterval);
+        const check = async () => {
+            try {
+                const data = await api.get(`/auth/code-status?email=${encodeURIComponent(pendingVerifyEmail)}`);
+                const waitingText = document.getElementById('verify-waiting-text');
+                if (data.stage === 'pending_admin' || data.stage === 'pending_super_admin') {
+                    waitingText.textContent = 'Once your email is verified, the System Administrator will send the code through your email address.';
+                } else if (data.stage === 'released' || data.stage === 'already_verified') {
+                    clearInterval(codeStatusPollInterval);
+                    document.getElementById('verify-waiting-box').style.display = 'none';
+                    document.getElementById('verify-email-form').style.display = 'block';
+                    if (data.code) document.getElementById('verify-code').value = data.code;
+                }
+            } catch (err) { /* keep polling silently */ }
+        };
+        check();
+        codeStatusPollInterval = setInterval(check, 5000);
+    }
+
+    async function handleVerifyEmail(event) {
+        event.preventDefault();
+        hideFormError('verify-error');
+        const code = document.getElementById('verify-code').value.trim();
+        setBtnLoading('verify-submit-btn', true);
+        try {
+            await api.post('/auth/verify-email', { email: pendingVerifyEmail, code });
+            if (codeStatusPollInterval) clearInterval(codeStatusPollInterval);
+            switchView('pending-approval-view');
+        } catch (err) {
+            showFormError('verify-error', err.message);
+        } finally {
+            setBtnLoading('verify-submit-btn', false, 'Verify Email');
+        }
+    }
+
+    async function resendVerificationCode() {
+        if (!pendingVerifyEmail) return;
+        try {
+            const data = await api.post('/auth/resend-verification', { email: pendingVerifyEmail });
+            document.getElementById('verify-waiting-box').style.display = 'block';
+            document.getElementById('verify-email-form').style.display = 'none';
+            showToast(data.message, 'success');
+            startCodeStatusPolling();
+        } catch (err) {
+            showFormError('verify-error', err.message);
+        }
+    }
+
+    function configureSetupView(passwordResetOnly) {
+        const hideIds = ['setup-fullname-group', 'setup-email-group', 'setup-mobile-group', 'setup-username-group'];
+        hideIds.forEach(id => {
+            document.getElementById(id).style.display = passwordResetOnly ? 'none' : 'block';
+        });
+        if (passwordResetOnly) {
+            document.getElementById('setup-title').textContent = 'Set a New Password';
+            document.getElementById('setup-subtitle').textContent = 'Your password was reset. Please choose a new password to continue — everything else about your account stays the same.';
+        } else {
+            document.getElementById('setup-title').textContent = 'Update Your Profile';
+            document.getElementById('setup-subtitle').textContent = 'This is a one-time setup. Please set your permanent username and password, and confirm your contact information.';
+        }
+    }
+
+    async function handleCompleteSetup(event) {
+        event.preventDefault();
+        hideFormError('setup-error');
+        const fullName = document.getElementById('setup-fullname').value.trim();
+        const email = document.getElementById('setup-email').value.trim();
+        const mobile = document.getElementById('setup-mobile').value.trim();
+        const newUsername = document.getElementById('setup-username').value.trim();
+        const newPassword = document.getElementById('setup-pass').value;
+        const confirmPassword = document.getElementById('setup-confirm').value;
+
+        if (newPassword !== confirmPassword) {
+            showFormError('setup-error', 'Passwords do not match.');
+            return;
+        }
+
+        setBtnLoading('setup-submit-btn', true);
+        try {
+            const data = await api.post('/auth/complete-setup', { fullName, email, mobile, newUsername, newPassword, confirmPassword });
+            setToken(data.token);
+            window.location.href = ROLE_HOME[data.user.role] || '/user/user.html';
+        } catch (err) {
+            showFormError('setup-error', err.message);
+        } finally {
+            setBtnLoading('setup-submit-btn', false, 'Complete Setup');
+        }
+    }
+
+    function loginWithGoogle() {
+        window.location.href = '/api/auth/google/start';
+    }
+
+    function loginWithFacebook() {
+        window.location.href = '/api/auth/facebook/start';
+    }
+
+    // If we just bounced back from a failed Google/Facebook login attempt, show why.
+    (function showOAuthErrorIfAny() {
+        const err = new URLSearchParams(window.location.search).get('oauthError');
+        if (err) {
+            const banner = document.createElement('div');
+            banner.style.cssText = 'background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:10px 16px; border-radius:10px; font-size:13px; text-align:center; margin:0 auto 16px auto; max-width:420px;';
+            banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${err.replace(/</g,'&lt;')}`;
+            document.querySelector('.right-panel')?.prepend(banner);
+        }
+    })();
+
+    // If auth-guard redirected here because a session needs setup, jump straight there.
+    if (new URLSearchParams(window.location.search).get('setup') === '1') {
+        configureSetupView(false);
+        switchView('setup-view');
+    }
+
+    // Show a small heads-up banner if the system is in maintenance/updating/shutdown,
+    // without blocking the Super Admin's ability to still log in and fix things.
+    (async function checkSystemStatusBanner() {
+        try {
+            const res = await fetch('/api/system-status');
+            const data = await res.json();
+            if (data.status && data.status !== 'online') {
+                const banner = document.createElement('div');
+                banner.style.cssText = 'background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:#f59e0b; padding:10px 16px; border-radius:10px; font-size:13px; text-align:center; margin:0 auto 16px auto; max-width:420px;';
+                banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${data.message ? data.message.replace(/</g,'&lt;') : 'The system is currently: ' + data.status}. Regular users: <a href="/status.html" style="color:#f59e0b;">view status</a>.`;
+                document.querySelector('.right-panel')?.prepend(banner);
+            }
+        } catch (e) { /* non-fatal */ }
+    <!-- Live Selfie Verification Modal — shown right before the signup
+         form actually submits. Captures a live photo (not an upload) so
+         staff can compare it against the ID photo during account review. -->
+    <div id="selfieModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:8000; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:var(--bg-card,#131926); border:1px solid var(--border-color,#1e293b); border-radius:20px; max-width:420px; width:100%; padding:24px;">
+            <div style="text-align:center; margin-bottom:14px;">
+                <i class="fa-solid fa-camera" style="font-size:28px; color:#10b981;"></i>
+                <h2 style="font-size:16px; margin-top:8px;">Live Selfie Verification</h2>
+                <p style="font-size:12px; color:#94a3b8; margin-top:4px;">Take a live photo of yourself. This is compared against your uploaded ID during account review — no photo uploads accepted here, camera only.</p>
+            </div>
+
+            <div id="selfieCameraWrap" style="position:relative; width:100%; aspect-ratio:3/4; background:#000; border-radius:14px; overflow:hidden; margin-bottom:14px;">
+                <video id="selfieVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover; display:block;"></video>
+                <canvas id="selfieCanvas" style="display:none; width:100%; height:100%; object-fit:cover;"></canvas>
+                <div id="selfieCameraError" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; text-align:center; padding:20px; color:#f87171; font-size:12px;"></div>
+            </div>
+
+            <div id="selfieCaptureRow" style="display:flex; gap:10px;">
+                <button type="button" onclick="closeSelfieModal()" style="flex:1; padding:12px; border:1px solid #1e293b; border-radius:10px; background:transparent; color:#94a3b8; font-weight:600; font-size:13px; cursor:pointer;">Cancel</button>
+                <button type="button" id="selfieCaptureBtn" onclick="captureSelfie()" style="flex:2; padding:12px; border:none; border-radius:10px; background:#10b981; color:#fff; font-weight:700; font-size:13px; cursor:pointer;"><i class="fa-solid fa-camera"></i> Capture Photo</button>
+            </div>
+            <div id="selfieConfirmRow" style="display:none; gap:10px;">
+                <button type="button" onclick="retakeSelfie()" style="flex:1; padding:12px; border:1px solid #1e293b; border-radius:10px; background:transparent; color:#94a3b8; font-weight:600; font-size:13px; cursor:pointer;">Retake</button>
+                <button type="button" onclick="confirmSelfieAndSubmit()" id="selfieConfirmBtn" style="flex:2; padding:12px; border:none; border-radius:10px; background:#10b981; color:#fff; font-weight:700; font-size:13px; cursor:pointer;"><i class="fa-solid fa-check"></i> Confirm &amp; Create Account</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

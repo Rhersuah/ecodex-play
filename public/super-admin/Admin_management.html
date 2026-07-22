@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E - Codex Play | Admin Management</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #0b0f17; --bg-card: #131926; --accent-blue: #3b82f6;
+            --accent-green: #10b981; --accent-red: #ef4444; --text-main: #ffffff;
+            --text-muted: #94a3b8; --border-color: #1e293b; --role-color: var(--accent-blue);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 70px 15px 40px; display: flex; flex-direction: column; align-items: center; }
+        .balance-container { width: 100%; max-width: 1000px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .role-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 6px; margin-bottom: 15px; background: rgba(59, 130, 246, 0.15); color: var(--role-color); }
+        .header-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+        .header-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 30px; }
+        .section-title { font-size: 18px; font-weight: 600; margin-top: 30px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .form-box { background: #0b0f17; border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+        .form-group input { background: #131926; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s; }
+        .form-group input:focus { border-color: var(--accent-blue); }
+        .full-width { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 10px; }
+        .btn-submit { background: var(--role-color); color: #fff; font-weight: 600; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        .btn-submit:hover { background: #2563eb; }
+        .table-responsive { width: 100%; overflow-x: auto; background: #0b0f17; border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 20px; max-height:520px; overflow-y:auto; }
+        .table-responsive thead { position: sticky; top: 0; z-index: 2; background: #0f172a; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th { background-color: rgba(30, 41, 59, 0.5); padding: 16px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); }
+        td { padding: 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        .user-tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        
+        /* New Delete/Revoke Button Styling */
+        .btn-action-delete { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-action-delete:hover { background: var(--accent-red); color: #fff; border-color: var(--accent-red); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+        .empty-text { padding: 30px; text-align: center; color: var(--text-muted); font-style: italic; }
+
+        /* Custom Popup Modal Styles */
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; opacity:0; pointer-events:none; transition: opacity 0.3s ease; z-index:9999; }
+        .modal-overlay.active { opacity:1; pointer-events:all; }
+        .modal-box { background:var(--bg-card); border:1px solid var(--border-color); width:90%; max-width:400px; padding:25px; border-radius:16px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); transform:scale(0.8); transition: transform 0.3s ease; }
+        .modal-overlay.active .modal-box { transform:scale(1); }
+        .modal-icon { font-size: 40px; margin-bottom: 15px; }
+        .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+        .modal-text { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
+        .modal-btn { background: var(--accent-blue); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; }
+        
+        /* Confirm Buttons Layout */
+        .modal-buttons-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-confirm-yes { background: var(--accent-red); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; }
+        .btn-confirm-no { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; }
+        .btn-confirm-no:hover { background: rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body>
+<a href="admin-user-management.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Admin / User Management">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+
+    <div class="balance-container">
+        <span class="role-badge">System Core</span>
+        <h1 class="header-title">Admin Personnel Management</h1>
+        <p class="header-subtitle">Deploy new executive system nodes and manage active workstation credentials secure pipeline.</p>
+
+        <h2 class="section-title"><i class="fa-solid fa-user-plus"></i> Register New System Admin</h2>
+        <form class="form-box" id="regForm" onsubmit="registerAdmin(event)">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="admFullName" placeholder="e.g. Alexander Pierce" required>
+            </div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="admUsername" placeholder="e.g. admin_alex" required>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="admEmail" placeholder="e.g. alex@ecodex.play" required>
+            </div>
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="text" id="admMobile" placeholder="e.g. 09123456789" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="admPassword" placeholder="••••••••" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="admConfirmPassword" placeholder="••••••••" required>
+            </div>
+            <div class="full-width">
+                <button type="submit" class="btn-submit">Provision Admin Node</button>
+            </div>
+        </form>
+
+        <h2 class="section-title"><i class="fa-solid fa-user-shield"></i> Active Registered Workspace Admins</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Account ID</th>
+                        <th>Full Name</th>
+                        <th>System Contact</th>
+                        <th>Access Node</th>
+                        <th>Network Status</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="adminDirectoryBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Notification/Alert Modal -->
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-box">
+            <div class="modal-icon" id="modalIcon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="modal-title" id="modalTitle">Notification</div>
+            <div class="modal-text" id="modalText">Message details go here.</div>
+            <button class="modal-btn" id="modalDefaultBtn" onclick="closePopup()">Understood</button>
+            <div class="modal-buttons-group" id="modalConfirmGroup" style="display: none;">
+                <button class="btn-confirm-yes" id="confirmYesBtn">Terminate Access</button>
+                <button class="btn-confirm-no" onclick="closePopup()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let targetDeleteId = null;
+        let targetBanId = null;
+
+        function showPopup(title, text, type = 'success', isConfirm = false) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalText').innerText = text;
+            const iconElement = document.getElementById('modalIcon');
+            const defaultBtn = document.getElementById('modalDefaultBtn');
+            const confirmGroup = document.getElementById('modalConfirmGroup');
+
+            if (isConfirm) {
+                iconElement.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-red)"></i>';
+                defaultBtn.style.display = 'none';
+                confirmGroup.style.display = 'flex';
+            } else {
+                confirmGroup.style.display = 'none';
+                defaultBtn.style.display = 'block';
+                if (type === 'danger') {
+                    iconElement.innerHTML = '<i class="fa-solid fa-circle-xmark" style="color:var(--accent-red)"></i>';
+                } else {
+                    iconElement.innerHTML = '<i class="fa-solid fa-circle-check" style="color:var(--accent-green)"></i>';
+                }
+            }
+            document.getElementById('customModal').classList.add('active');
+        }
+
+        function closePopup() {
+            document.getElementById('customModal').classList.remove('active');
+            targetDeleteId = null;
+            targetBanId = null;
+        }
+
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        async function updateUI() {
+            const tbody = document.getElementById('adminDirectoryBody');
+            try {
+                const { admins } = await api.get('/superadmin/admins');
+                if (admins.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="empty-text">No admins registered in the system yet.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = admins.map(a => `
+                    <tr>
+                        <td style="font-family:monospace; color:#64748b;">ADM-${a.id}</td>
+                        <td>
+                            <div style="font-weight:700;">${escapeHtml(a.full_name)}</div>
+                            <div style="font-size:12px; color:var(--text-muted);">@${escapeHtml(a.username)}</div>
+                        </td>
+                        <td>
+                            <div>${escapeHtml(a.email || 'N/A')}</div>
+                            <div style="font-size:12px; color:var(--text-muted);">${escapeHtml(a.mobile || 'N/A')}</div>
+                        </td>
+                        <td><span class="user-tag">ADMIN</span></td>
+                        <td><span class="status-badge" style="${a.status === 'banned' ? 'background:rgba(239,68,68,0.15); color:#f87171;' : ''}">${a.status === 'banned' ? 'BANNED' : 'ACTIVE'}</span></td>
+                        <td style="text-align: center; display:flex; gap:6px; justify-content:center;">
+                            ${a.status === 'banned'
+                              ? `<button class="btn-action-delete" style="background:rgba(16,185,129,0.15); color:#10b981;" onclick="setAdminStatus(${a.id}, 'active')"><i class="fa-solid fa-user-check"></i> Unban</button>`
+                              : `<button class="btn-action-delete" onclick="askBanAdmin(${a.id}, '${escapeHtml(a.full_name)}')"><i class="fa-solid fa-user-slash"></i> Ban</button>`
+                            }
+                            <button class="btn-action-delete" style="background:rgba(148,163,184,0.15); color:#94a3b8;" onclick="askTerminateAdmin(${a.id}, '${escapeHtml(a.full_name)}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                            <button class="btn-action-delete" style="background:rgba(59,130,246,0.15); color:#3b82f6;" onclick="resetAdminPassword(${a.id}, '${escapeHtml(a.full_name)}')"><i class="fa-solid fa-key"></i> Reset Password</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-text">Error loading admins: ${escapeHtml(e.message)}</td></tr>`;
+            }
+        }
+
+        async function registerAdmin(event) {
+            event.preventDefault();
+
+            const fullName = document.getElementById('admFullName').value.trim();
+            const username = document.getElementById('admUsername').value.trim();
+            const email = document.getElementById('admEmail').value.trim();
+            const mobile = document.getElementById('admMobile').value.trim();
+            const password = document.getElementById('admPassword').value;
+            const confirmPassword = document.getElementById('admConfirmPassword').value;
+
+            if (password !== confirmPassword) {
+                return showPopup("Mismatched Password", "Confirm password entry does not match original field.", "danger");
+            }
+
+            try {
+                await api.post('/superadmin/admins', { fullName, username, email, mobile, password });
+                document.getElementById('regForm').reset();
+                showPopup("System Provisioned", `Admin console node authorized for ${fullName}.`);
+                updateUI();
+            } catch (e) {
+                showPopup("Node Conflict", e.message, "danger");
+            }
+        }
+
+        function askTerminateAdmin(id, name) {
+            targetDeleteId = id;
+            targetBanId = null;
+            document.getElementById('confirmYesBtn').textContent = 'Delete Permanently';
+            showPopup("Terminate Access Node?", `Are you sure you want to permanently delete Admin "${name}"? This cannot be undone.`, "danger", true);
+        }
+
+        function askBanAdmin(id, name) {
+            targetBanId = id;
+            targetDeleteId = null;
+            document.getElementById('confirmYesBtn').textContent = 'Ban Account';
+            showPopup("Ban Admin Account?", `Ban Admin "${name}"? They won't be able to log in until unbanned.`, "danger", true);
+        }
+
+        async function resetAdminPassword(id, name) {
+            if (!(await appConfirm(`Reset the password for Admin "${name}"? They will need to log in with a temporary password and immediately set their own new one.`, 'Reset Password'))) return;
+            try {
+                const data = await api.post(`/superadmin/admins/${id}/reset-password`, {});
+                showPasswordModal(name, data.tempPassword);
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        async function setAdminStatus(id, status) {
+            try {
+                await api.patch(`/superadmin/admins/${id}/status`, { status });
+                showToast(status === 'banned' ? 'Admin banned.' : 'Admin unbanned.', 'success');
+                updateUI();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        document.getElementById('confirmYesBtn').addEventListener('click', async function() {
+            try {
+                if (targetDeleteId) {
+                    await api.del(`/superadmin/admins/${targetDeleteId}`);
+                    closePopup();
+                    showPopup("Access Revoked", "The admin account has been permanently removed.", "success");
+                } else if (targetBanId) {
+                    await api.patch(`/superadmin/admins/${targetBanId}/status`, { status: 'banned' });
+                    closePopup();
+                    showPopup("Admin Banned", "The admin account has been banned.", "success");
+                }
+                updateUI();
+            } catch (e) {
+                closePopup();
+                showPopup("Error", e.message, "danger");
+            }
+        });
+
+        document.addEventListener('auth-ready', updateUI);
+    </script>
+<div id="passwordModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:3000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#131926; border:1px solid #1e293b; border-radius:20px; max-width:420px; width:100%; padding:28px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.6);">
+        <i class="fa-solid fa-key" style="font-size:32px; color:#3b82f6; margin-bottom:12px;"></i>
+        <h3 style="font-size:16px; font-weight:700; margin-bottom:6px;">Temporary Password</h3>
+        <p id="pwModalName" style="font-size:13px; color:#94a3b8; margin-bottom:18px;"></p>
+        <div style="background:#0b0f17; border:1px solid #1e293b; border-radius:12px; padding:16px; font-family:monospace; font-size:20px; font-weight:800; letter-spacing:2px; color:#10b981; margin-bottom:14px; word-break:break-all;" id="pwModalValue"></div>
+        <button onclick="copyTempPassword()" style="width:100%; padding:11px; background:#3b82f6; border:none; border-radius:10px; color:#fff; font-weight:700; font-size:13px; cursor:pointer; margin-bottom:10px;"><i class="fa-solid fa-copy"></i> <span id="pwModalCopyLabel">Copy Password</span></button>
+        <p style="font-size:11px; color:#64748b; margin-bottom:16px; line-height:1.5;">Give this to them securely. They will be required to set their own permanent password on next login. This will not be shown again.</p>
+        <button onclick="document.getElementById('passwordModalOverlay').style.display='none'" style="width:100%; padding:11px; background:#1e293b; border:none; border-radius:10px; color:#94a3b8; font-weight:600; font-size:13px; cursor:pointer;">Close</button>
+    </div>
+</div>
+
+<script>
+    function showPasswordModal(name, password) {
+        document.getElementById('pwModalName').textContent = `For: ${name}`;
+        document.getElementById('pwModalValue').textContent = password;
+        document.getElementById('pwModalCopyLabel').textContent = 'Copy Password';
+        document.getElementById('passwordModalOverlay').style.display = 'flex';
+    }
+
+    function copyTempPassword() {
+        const value = document.getElementById('pwModalValue').textContent;
+        navigator.clipboard.writeText(value).then(() => {
+            document.getElementById('pwModalCopyLabel').textContent = 'Copied!';
+            setTimeout(() => { document.getElementById('pwModalCopyLabel').textContent = 'Copy Password'; }, 2000);
+        }).catch(() => showToast('Could not copy automatically — please select and copy manually.', 'error'));
+    }
+</script>
+</body>
+</html>

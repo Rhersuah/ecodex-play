@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Settings</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:560px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;line-height:1.5;}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:22px;margin-bottom:18px;}
+  .card h2{font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:16px;}
+  label{font-size:12px;font-weight:600;color:#cbd5e1;display:block;margin-bottom:6px;}
+  select{width:100%;background:#0b0f17;border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;margin-bottom:16px;}
+  .toggle-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;}
+  .toggle-row label{margin-bottom:0; padding-top:3px; line-height:1.4;}
+  .switch{position:relative;width:42px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;cursor:pointer;inset:0;background:#334155;border-radius:24px;transition:.2s;}
+  .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+  input:checked + .slider{background:var(--accent-green);}
+  input:checked + .slider:before{transform:translateX(18px);}
+  .btn{width:100%;padding:13px;border:none;border-radius:10px;background:var(--accent-green);color:#fff;font-weight:700;font-size:13px;cursor:pointer;}
+  .notice{font-size:11px;color:#64748b;margin-top:6px;line-height:1.5;}
+</style>
+</head>
+<body>
+<a href="user.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+<div class="wrap">
+    <h1>Settings</h1>
+    <p class="sub">These preferences only affect your own account.</p>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-bell"></i> Notifications</h2>
+        <div class="toggle-row" onclick="if(!event.target.closest('.switch')){const cb=this.querySelector('input');cb.checked=!cb.checked;}" style="cursor:pointer;">
+            <label style="cursor:pointer;">Notify me of new Support messages</label>
+            <label class="switch"><input type="checkbox" id="notifyMessages"><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row" onclick="if(!event.target.closest('.switch')){const cb=this.querySelector('input');cb.checked=!cb.checked;}" style="cursor:pointer;">
+            <label style="cursor:pointer;">Notify me of transaction updates</label>
+            <label class="switch"><input type="checkbox" id="notifyTransactions"><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row" onclick="if(!event.target.closest('.switch')){const cb=this.querySelector('input');cb.checked=!cb.checked;}" style="cursor:pointer;">
+            <label style="cursor:pointer;">Notify me of draw results</label>
+            <label class="switch"><input type="checkbox" id="notifyDraws"><span class="slider"></span></label>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-gauge"></i> Dashboard</h2>
+        <label>Default view when I log in</label>
+        <select id="defaultView">
+            <option value="summary">Summary overview</option>
+            <option value="tickets">My tickets</option>
+            <option value="balance">Balance & transactions</option>
+        </select>
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-key"></i> Change Password</h2>
+        <label>Current Password</label>
+        <input type="password" id="currentPassword" placeholder="Enter current password" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; color:#fff; font-size:13px; margin-bottom:16px;">
+        <label>New Password</label>
+        <input type="password" id="newPassword" placeholder="At least 8 characters" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; color:#fff; font-size:13px; margin-bottom:16px;">
+        <label>Confirm New Password</label>
+        <input type="password" id="confirmNewPassword" placeholder="Repeat new password" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; color:#fff; font-size:13px; margin-bottom:16px;">
+        <button class="btn" id="changePasswordBtn" onclick="changePassword()" style="background:#3b82f6;"><i class="fa-solid fa-lock"></i> Update Password</button>
+    </div>
+
+    <button class="btn" onclick="saveSettings()"><i class="fa-solid fa-check"></i> Save Settings</button>
+    <p class="notice"><i class="fa-solid fa-shield-halved"></i> These are personal preferences only — your account information, balance, and role are managed elsewhere.</p>
+</div>
+
+<script>
+    async function loadSettings() {
+        try {
+            const data = await api.get('/user/settings');
+            document.getElementById('notifyMessages').checked = !!data.notify_new_messages;
+            document.getElementById('notifyTransactions').checked = !!data.notify_transaction_updates;
+            document.getElementById('notifyDraws').checked = !!data.notify_draw_results;
+            document.getElementById('defaultView').value = data.default_dashboard_view;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function saveSettings() {
+        try {
+            await api.patch('/user/settings', {
+                notifyNewMessages: document.getElementById('notifyMessages').checked,
+                notifyTransactionUpdates: document.getElementById('notifyTransactions').checked,
+                notifyDrawResults: document.getElementById('notifyDraws').checked,
+                defaultDashboardView: document.getElementById('defaultView').value,
+            });
+            showToast('Settings saved!', 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function changePassword() {
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmNewPassword').value;
+        if (!currentPassword || !newPassword) return showToast('Please fill in all password fields.', 'error');
+        if (newPassword !== confirmPassword) return showToast('New passwords do not match.', 'error');
+
+        setBtnLoading('changePasswordBtn', true);
+        try {
+            await api.post('/account/change-password', { currentPassword, newPassword, confirmPassword });
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+            showToast('Password updated successfully!', 'success');
+        } catch (e) {
+            showToast(e.message, 'error');
+        } finally {
+            setBtnLoading('changePasswordBtn', false, '<i class="fa-solid fa-lock"></i> Update Password');
+        }
+    }
+
+    document.addEventListener('auth-ready', loadSettings);
+</script>
+</body>
+</html>

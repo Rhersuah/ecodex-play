@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | File Storage Management</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:70px 20px 40px;}
+  .wrap{max-width:820px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .overview-row{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:24px;}
+  .overview-card{background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:16px; text-align:center;}
+  .overview-card .num{font-size:22px; font-weight:800; color:var(--accent-green);}
+  .overview-card .lbl{font-size:11px; color:var(--text-muted); margin-top:4px;}
+  .category{background:var(--bg-card); border:1px solid var(--border-color); border-radius:16px; margin-bottom:14px; overflow:hidden;}
+  .category-head{display:flex; align-items:center; justify-content:space-between; padding:16px 18px; cursor:pointer;}
+  .category-head .left{display:flex; align-items:center; gap:12px;}
+  .category-head .title{font-weight:700; font-size:14px;}
+  .category-head .meta{font-size:11px; color:var(--text-muted); margin-top:2px;}
+  .category-head .chevron{transition:.2s; color:var(--text-muted);}
+  .category.open .chevron{transform:rotate(180deg);}
+  .category-body{display:none; border-top:1px solid var(--border-color); padding:16px 18px;}
+  .category.open .category-body{display:block;}
+  .retention-row{display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;}
+  .retention-row input{width:90px; background:#0b0f17; border:1px solid var(--border-color); border-radius:8px; padding:8px 10px; color:#fff; font-size:13px;}
+  .retention-row label{font-size:12px; color:var(--text-muted);}
+  .btn{padding:9px 14px; border:none; border-radius:8px; background:var(--accent-green); color:#fff; font-weight:700; font-size:12px; cursor:pointer;}
+  .btn-danger{background:#ef4444;}
+  .btn-muted{background:#334155; color:#cbd5e1;}
+  .file-toolbar{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .file-list{max-height:400px; overflow-y:auto;}
+  .file-row{display:flex; align-items:center; gap:12px; padding:10px; border-radius:10px; background:#0b0f17; margin-bottom:8px;}
+  .file-thumb{width:40px; height:40px; border-radius:8px; background:#1e293b; flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center;}
+  .file-thumb img{width:100%; height:100%; object-fit:cover;}
+  .file-info{flex:1; min-width:0;}
+  .file-name{font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .file-meta{font-size:10px; color:var(--text-muted);}
+  .empty{color:var(--text-muted); font-size:12px; font-style:italic; padding:16px; text-align:center;}
+</style>
+</head>
+<body>
+<a href="settings.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Settings">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1><i class="fa-solid fa-hard-drive"></i> File Storage Management</h1>
+    <p class="sub">Every file ever uploaded to the platform, organized by category. Deleting a file here removes it permanently from server storage — this cannot be undone. Only Super Admin can view, delete, or set an automatic retention period here.</p>
+
+    <div class="overview-row" id="overviewRow"></div>
+    <div id="categoriesList"><div class="empty">Loading...</div></div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+    function formatBytes(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+    const IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
+    function isImage(name) {
+        return IMAGE_EXT.some(ext => name.toLowerCase().endsWith(ext));
+    }
+
+    let storageData = [];
+
+    async function loadStorage() {
+        try {
+            const { categories } = await api.get('/superadmin/storage');
+            storageData = categories;
+
+            const totalFiles = categories.reduce((s, c) => s + c.fileCount, 0);
+            const totalBytes = categories.reduce((s, c) => s + c.totalBytes, 0);
+            document.getElementById('overviewRow').innerHTML = `
+                <div class="overview-card"><div class="num">${totalFiles}</div><div class="lbl">Total Files</div></div>
+                <div class="overview-card"><div class="num">${formatBytes(totalBytes)}</div><div class="lbl">Total Storage Used</div></div>
+                <div class="overview-card"><div class="num">${categories.length}</div><div class="lbl">Categories</div></div>
+            `;
+
+            document.getElementById('categoriesList').innerHTML = categories.map(cat => `
+                <div class="category" id="cat-${cat.key}">
+                    <div class="category-head" onclick="toggleCategory('${cat.key}')">
+                        <div class="left">
+                            <i class="fa-solid fa-folder" style="color:#f59e0b; font-size:18px;"></i>
+                            <div>
+                                <div class="title">${escapeHtml(cat.label)}</div>
+                                <div class="meta">${cat.fileCount} file${cat.fileCount !== 1 ? 's' : ''} — ${formatBytes(cat.totalBytes)}${cat.retentionDays ? ` — auto-delete after ${cat.retentionDays}d` : ''}</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down chevron"></i>
+                    </div>
+                    <div class="category-body">
+                        <div class="retention-row">
+                            <label>Auto-delete files older than</label>
+                            <input type="number" min="1" id="retention-${cat.key}" value="${cat.retentionDays || ''}" placeholder="Never">
+                            <label>days</label>
+                            <button class="btn btn-muted" onclick="saveRetention('${cat.key}')">Save</button>
+                        </div>
+                        <div class="file-toolbar">
+                            <input type="checkbox" onchange="toggleSelectAllInCategory('${cat.key}', this.checked)">
+                            <span style="font-size:11px; color:var(--text-muted);">Select all</span>
+                            <button class="btn btn-danger" style="margin-left:auto;" onclick="bulkDeleteCategory('${cat.key}')"><i class="fa-solid fa-trash"></i> Delete Selected</button>
+                        </div>
+                        <div class="file-list">
+                            ${cat.isPerUser
+                                ? (cat.userFolders && cat.userFolders.length
+                                    ? cat.userFolders.map(u => `
+                                        <div style="margin-bottom:14px;">
+                                            <div style="display:flex; align-items:center; gap:8px; padding:8px 4px; font-size:12px; font-weight:700; color:#e2e8f0; border-bottom:1px solid var(--border-color);">
+                                                <i class="fa-solid fa-user-folder" style="color:#60a5fa;"></i>
+                                                ${escapeHtml(u.ownerName)} ${u.ownerUsername ? `<span style="color:var(--text-muted); font-weight:400;">@${escapeHtml(u.ownerUsername)}</span>` : ''}
+                                                <span style="margin-left:auto; color:var(--text-muted); font-weight:400;">${u.fileCount} file${u.fileCount !== 1 ? 's' : ''}</span>
+                                            </div>
+                                            ${u.files.map(f => `
+                                                <div class="file-row">
+                                                    <input type="checkbox" class="file-check-${cat.key}" value="${escapeHtml(u.userId)}::${escapeHtml(f.name)}">
+                                                    <div class="file-thumb">${isImage(f.name) ? `<img src="${f.url}">` : '<i class="fa-solid fa-file" style="color:#64748b;"></i>'}</div>
+                                                    <div class="file-info">
+                                                        <div class="file-name">${escapeHtml(f.name)}</div>
+                                                        <div class="file-meta">${formatBytes(f.sizeBytes)} — ${new Date(f.modifiedAt).toLocaleDateString()}</div>
+                                                    </div>
+                                                    <button class="btn btn-danger" style="padding:6px 10px;" onclick="deleteUserFile('${cat.key}', '${escapeHtml(u.userId)}', '${escapeHtml(f.name)}')"><i class="fa-solid fa-trash"></i></button>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    `).join('')
+                                    : '<div class="empty">No files in this category yet.</div>')
+                                : (cat.files.length ? cat.files.map(f => `
+                                    <div class="file-row">
+                                        <input type="checkbox" class="file-check-${cat.key}" value="${escapeHtml(f.name)}">
+                                        <div class="file-thumb">${isImage(f.name) ? `<img src="${f.url}">` : '<i class="fa-solid fa-file" style="color:#64748b;"></i>'}</div>
+                                        <div class="file-info">
+                                            <div class="file-name">${escapeHtml(f.name)}</div>
+                                            <div class="file-meta">${formatBytes(f.sizeBytes)} — ${new Date(f.modifiedAt).toLocaleDateString()}</div>
+                                        </div>
+                                        <button class="btn btn-danger" style="padding:6px 10px;" onclick="deleteFile('${cat.key}', '${escapeHtml(f.name)}')"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                `).join('') : '<div class="empty">No files in this category yet.</div>')
+                            }
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function toggleCategory(key) {
+        document.getElementById(`cat-${key}`).classList.toggle('open');
+    }
+
+    function toggleSelectAllInCategory(key, checked) {
+        document.querySelectorAll(`.file-check-${key}`).forEach(cb => cb.checked = checked);
+    }
+
+    async function deleteFile(category, filename) {
+        if (!(await appConfirm(`Permanently delete "${filename}" from server storage? This cannot be undone.`, 'Delete Permanently'))) return;
+        try {
+            await api.del(`/superadmin/storage/${category}/${encodeURIComponent(filename)}`);
+            showToast('File deleted.', 'success');
+            loadStorage();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function deleteUserFile(category, userId, filename) {
+        if (!(await appConfirm(`Permanently delete "${filename}" from server storage? This cannot be undone.`, 'Delete Permanently'))) return;
+        try {
+            await api.del(`/superadmin/storage/${category}/user/${encodeURIComponent(userId)}/${encodeURIComponent(filename)}`);
+            showToast('File deleted.', 'success');
+            loadStorage();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function bulkDeleteCategory(key) {
+        const values = Array.from(document.querySelectorAll(`.file-check-${key}:checked`)).map(cb => cb.value);
+        if (values.length === 0) return showToast('Select at least one file first.', 'error');
+        if (!(await appConfirm(`Permanently delete ${values.length} selected file(s) from server storage? This cannot be undone.`, 'Delete Permanently'))) return;
+
+        const isPerUser = values[0].includes('::');
+        try {
+            if (isPerUser) {
+                let deleted = 0;
+                for (const val of values) {
+                    const [userId, filename] = val.split('::');
+                    try {
+                        await api.del(`/superadmin/storage/${key}/user/${encodeURIComponent(userId)}/${encodeURIComponent(filename)}`);
+                        deleted++;
+                    } catch (e) { /* continue with the rest */ }
+                }
+                showToast(`${deleted} file(s) deleted.`, 'success');
+            } else {
+                const data = await api.post(`/superadmin/storage/${key}/bulk-delete`, { filenames: values });
+                showToast(`${data.deleted} file(s) deleted.`, 'success');
+            }
+            loadStorage();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function saveRetention(key) {
+        const val = document.getElementById(`retention-${key}`).value;
+        try {
+            await api.post(`/superadmin/storage/${key}/retention`, { retentionDays: val || null });
+            showToast(val ? `Files in this category will auto-delete after ${val} days.` : 'Retention cleared — files kept forever.', 'success');
+            loadStorage();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', loadStorage);
+</script>
+</body>
+</html>

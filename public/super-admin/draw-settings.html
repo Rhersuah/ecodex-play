@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Draw Management</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;--accent-pink:#ec4899;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:720px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:22px;}
+  .card h2{font-size:14px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:16px;}
+  label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:6px;}
+  input{width:100%;background:#0b0f17;border:1px solid var(--border-color);border-radius:10px;padding:12px;color:#fff;font-size:14px;margin-bottom:16px;text-overflow:ellipsis;}
+  input[type="datetime-local"]{font-size:13px;padding:10px 8px;max-width:100%;}
+  .btn{width:100%;padding:13px;border:none;border-radius:10px;background:var(--accent-pink);color:#fff;font-weight:700;font-size:13px;cursor:pointer;}
+  .engine-option{background:#0b0f17;border:2px solid var(--border-color);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px;}
+  .engine-option.selected{border-color:var(--accent-pink);background:rgba(236,72,153,0.08);}
+  .engine-option i{font-size:22px;color:var(--accent-pink);}
+  .engine-option .name{font-weight:700;font-size:14px;}
+  .engine-option .desc{font-size:11px;color:var(--text-muted);}
+  .status-line{font-size:12px;color:var(--text-muted);margin-top:10px;}.related-links-section { background: var(--bg-card, #131926); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; padding: 8px 20px; margin-bottom: 24px; }
+.related-link-row { display: flex; align-items: center; gap: 14px; padding: 16px 4px; color: var(--accent-green, #10b981); text-decoration: none; font-size: 15px; font-weight: 600; border-bottom: 1px solid var(--border-color, #1e293b); }
+.related-link-row:last-child { border-bottom: none; }
+.related-link-row i { width: 20px; text-align: center; font-size: 16px; }
+</style>
+</head>
+<body>
+<a href="super_admin.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = ["admin", "super_admin"];</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>Live Draw Management</h1>
+    <p class="sub">Set the auto-draw schedule and choose which visual engine users see on their Live Draw screen. Changes here reflect immediately. <a href="live-draw-monitor.html" style="color:#ec4899;">Watch the Live Draw Monitor &rarr;</a></p>
+
+    <div class="related-links-section">
+        <a href="ticket_management.html" class="related-link-row"><i class="fa-solid fa-chart-line"></i> Ticket Management</a>
+        <a href="winner-approval.html" class="related-link-row"><i class="fa-solid fa-trophy"></i> Winner Approval</a>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2><i class="fa-solid fa-clock"></i> Draw Trigger Scheduler</h2>
+            <label>Target Date & Time for Auto-Draw</label>
+            <input type="datetime-local" id="targetDatetime">
+
+            <label>Number of Winners to Pick</label>
+            <input type="number" id="winnerCount" min="1" value="1" placeholder="e.g. 3">
+            <p style="font-size:11px; color:#64748b; margin-top:-10px; margin-bottom:14px;">How many tickets win when this draw resolves. Each winner gets its own reveal spin on the wheel, one after another.</p>
+
+            <button class="btn" onclick="saveSchedule()"><i class="fa-solid fa-bolt"></i> Save Schedule</button>
+            <div class="status-line" id="scheduleStatus"></div>
+            <div id="verifyArea" style="margin-top:14px; display:none;">
+                <button class="btn" style="background:#10b981;" onclick="verifySchedule()"><i class="fa-solid fa-shield-check"></i> Verify Schedule (allow ticket drops)</button>
+                <p style="font-size:11px; color:#64748b; margin-top:6px;">Until this is verified, users cannot drop Normal tier tickets into the pool.</p>
+            </div>
+            <div id="verifiedBadge" style="display:none; margin-top:14px; font-size:12px; color:#10b981;"><i class="fa-solid fa-circle-check"></i> Schedule verified — ticket drops are open.</div>
+            <div id="forceCancelArea" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border-color);">
+                <button class="btn" style="background:#64748b; margin-bottom:8px;" onclick="takeEngineOffline()"><i class="fa-solid fa-power-off"></i> Take Offline</button>
+                <p style="font-size:11px; color:#64748b; margin-bottom:10px;">Simply turns off the engine (clears the schedule) — use this when there's nothing dropped and you just want it offline, no drama.</p>
+                <button class="btn" style="background:#ef4444;" onclick="forceCancelDraw()"><i class="fa-solid fa-ban"></i> Force Cancel Draw</button>
+                <p style="font-size:11px; color:#64748b; margin-top:6px;">Emergency override. Cancels this draw and returns every dropped ticket to its owner.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-dice"></i> Live Draw Visual Engine</h2>
+            <div class="engine-option" id="engine-wheel" onclick="selectEngine('wheel')">
+                <i class="fa-solid fa-record-vinyl"></i>
+                <div><div class="name">Wheel of Fortune</div><div class="desc">Classic spinning circular selector</div></div>
+            </div>
+            <div class="engine-option" id="engine-tambiolo" onclick="selectEngine('tambiolo')">
+                <i class="fa-solid fa-circle-dot"></i>
+                <div><div class="name">Tambiolo Sphere</div><div class="desc">Air-blown cage ball lottery mechanism</div></div>
+            </div>
+            <div class="engine-option" id="engine-dice" onclick="selectEngine('dice')">
+                <i class="fa-solid fa-dice-six"></i>
+                <div><div class="name">Cyber Dice Grid</div><div class="desc">Digital randomized grid drop</div></div>
+            </div>
+            <div class="engine-option" id="engine-cards" onclick="selectEngine('cards')">
+                <i class="fa-solid fa-layer-group"></i>
+                <div><div class="name">Laser Card Deck</div><div class="desc">High-speed shuffled deck selector</div></div>
+            </div>
+            <div class="status-line" id="engineStatus"></div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2><i class="fa-solid fa-dice"></i> Live Draw Pool — Predetermine & Execute</h2>
+        <p style="font-size:12px; color:#64748b; margin-bottom:14px;">Optionally set which dropped ticket wins before the draw runs. Leave blank for a genuinely random, fair draw from the pool.</p>
+
+        <label>Predetermined Winning Ticket (optional)</label>
+        <input type="text" id="predetermineCode" placeholder="e.g. ECP-1234 (must be in the pool)">
+        <button class="btn" style="background:#3b82f6; margin-bottom:16px;" onclick="submitPredetermine()"><i class="fa-solid fa-crosshairs"></i> Set Predetermined Winner</button>
+        <div id="predetermineStatus" class="status-line"></div>
+        <p style="font-size:11px; color:#64748b;">The draw resolves automatically once the countdown reaches zero — no manual step needed. It uses this predetermined ticket if set and approved, otherwise a fair random pick.</p>
+    </div>
+
+    <div class="card" style="margin-top:20px;" id="pendingPredeterminedCard">
+        <h2><i class="fa-solid fa-user-shield"></i> Admin-Set Winners Awaiting Your Approval</h2>
+        <div id="pendingPredeterminedList" style="font-size:13px; color:#64748b;">Loading...</div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2><i class="fa-solid fa-trophy"></i> Draw Results — Set Winners</h2>
+        <label>Select Draw to Close</label>
+        <select id="drawSelect" onchange="onDrawSelected()"></select>
+
+        <div id="winnerFormArea" style="display:none;">
+            <label>🥇 1st Place Ticket Number (Gold)</label>
+            <input type="text" id="winner1st" placeholder="e.g. ECP-1234 or ticket number">
+
+            <label>🥈 2nd Place Ticket Number (Silver) — optional</label>
+            <input type="text" id="winner2nd" placeholder="Optional">
+
+            <label>🥉 3rd Place Ticket Number (Bronze) — optional</label>
+            <input type="text" id="winner3rd" placeholder="Optional">
+
+            <label>Additional Winners (optional, one per line)</label>
+            <textarea id="winnerAdditional" rows="3" placeholder="One ticket number per line" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:12px; color:#fff; font-size:14px; margin-bottom:16px;"></textarea>
+
+            <button class="btn" onclick="closeDrawWithWinners()"><i class="fa-solid fa-flag-checkered"></i> Close Draw & Announce Winners</button>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h2><i class="fa-solid fa-broom"></i> All Draws — Cleanup</h2>
+        <p style="font-size:12px; color:#64748b; margin-bottom:14px;">Every draw in the system, including stray/leftover entries. Only Super Admin can delete a draw, and only if it has no tickets attached to it.</p>
+        <div id="allDrawsList" style="max-height:400px; overflow-y:auto;">Loading...</div>
+    </div>
+</div>
+
+<script>
+    let selectedEngine = 'wheel';
+
+    function selectEngine(engine) {
+        selectedEngine = engine;
+        ['wheel','tambiolo','dice','cards'].forEach(e => {
+            document.getElementById('engine-' + e).classList.toggle('selected', e === engine);
+        });
+        saveEngine();
+    }
+
+    async function loadSettings() {
+        try {
+            const data = await api.get('/shared/draw-settings');
+            selectedEngine = data.active_engine;
+            selectEngineVisualOnly(data.active_engine);
+            if (data.target_datetime) document.getElementById('targetDatetime').value = data.target_datetime.slice(0, 16);
+            document.getElementById('winnerCount').value = data.winner_count || 1;
+            document.getElementById('scheduleStatus').textContent = data.target_datetime
+                ? `Currently scheduled for ${new Date(data.target_datetime).toLocaleString()}`
+                : 'No auto-draw currently scheduled.';
+
+            const verifyArea = document.getElementById('verifyArea');
+            const verifiedBadge = document.getElementById('verifiedBadge');
+            const isLocked = !!data.schedule_verified_by;
+
+            // Force Cancel / Take Offline only make sense while a draw is
+            // genuinely still open — once it auto-completes and goes
+            // offline, there's nothing left to cancel, so hide these
+            // rather than let staff click a button that does nothing.
+            let hasActiveDraw = false;
+            try {
+                const poolStatus = await api.get('/shared/draw-pool-status');
+                hasActiveDraw = !!(poolStatus.draw && poolStatus.draw.status === 'open');
+            } catch (e) { /* non-fatal */ }
+
+            document.getElementById('targetDatetime').disabled = isLocked;
+            document.getElementById('winnerCount').disabled = isLocked;
+            document.querySelectorAll('.engine-option').forEach(el => {
+                el.style.pointerEvents = isLocked ? 'none' : 'auto';
+                el.style.opacity = isLocked ? '0.6' : '1';
+            });
+            document.getElementById('forceCancelArea').style.display = (isLocked && hasActiveDraw) ? 'block' : 'none';
+
+            if (!data.target_datetime) {
+                verifyArea.style.display = 'none';
+                verifiedBadge.style.display = 'none';
+            } else if (isLocked) {
+                verifyArea.style.display = 'none';
+                verifiedBadge.style.display = 'block';
+            } else {
+                verifyArea.style.display = 'block';
+                verifiedBadge.style.display = 'none';
+            }
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function takeEngineOffline() {
+        try {
+            const status = await api.get('/shared/draw-pool-status');
+            if (status.poolCount > 0) {
+                showToast('There are still tickets dropped in the pool — use Force Cancel instead so they get returned.', 'error');
+                return;
+            }
+            if (!(await appConfirm('Take the engine offline? This clears the current schedule.', 'Take Offline'))) return;
+            await api.patch('/shared/draw-settings', { targetDatetime: null });
+            showToast('Engine is now offline.', 'success');
+            loadSettings();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function forceCancelDraw() {
+        const choice = await appChoice(
+            'Force cancel this draw? Choose what happens to any tickets that were dropped into the pool.',
+            [
+                { label: 'Return tickets to owners', value: 'return', color: '#10b981' },
+                { label: 'Permanently delete tickets', value: 'delete', color: '#ef4444' },
+            ]
+        );
+        if (choice === null) return;
+        try {
+            const data = await api.post('/shared/draw-settings/force-cancel', { deleteTickets: choice === 'delete' });
+            showToast(data.message, 'success');
+            document.getElementById('targetDatetime').value = '';
+            document.getElementById('winnerCount').value = '1';
+            loadSettings();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function verifySchedule() {
+        try {
+            await api.post('/shared/draw-settings/verify-schedule', {});
+            showToast('Schedule verified! Ticket drops are now open.', 'success');
+            loadSettings();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function selectEngineVisualOnly(engine) {
+        ['wheel','tambiolo','dice','cards'].forEach(e => {
+            document.getElementById('engine-' + e).classList.toggle('selected', e === engine);
+        });
+    }
+
+    async function saveEngine() {
+        try {
+            await api.patch('/shared/draw-settings', { activeEngine: selectedEngine });
+            showToast('Live Draw engine updated!', 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function saveSchedule() {
+        const targetDatetime = document.getElementById('targetDatetime').value;
+        const winnerCount = document.getElementById('winnerCount').value;
+        try {
+            await api.patch('/shared/draw-settings', {
+                targetDatetime: targetDatetime || null,
+                winnerCount: winnerCount ? Number(winnerCount) : 1,
+            });
+            showToast('Schedule saved!', 'success');
+            loadSettings();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    let openDraws = [];
+    let poolDraw = null;
+
+    async function submitPredetermine() {
+        const code = document.getElementById('predetermineCode').value.trim();
+        if (!code) return showToast('Please enter a ticket code.', 'error');
+        if (!poolDraw) return showToast('No open pool draw right now.', 'error');
+        try {
+            const data = await api.post(`/admin/draws/${poolDraw.id}/predetermine`, { ticketCode: code });
+            showToast(data.message, 'success');
+            document.getElementById('predetermineStatus').textContent = data.message;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function promptCancelChoice(reason) {
+        const choice = await appChoice(
+            `${reason}\n\nCancel this draw? Choose what happens to any dropped tickets.`,
+            [
+                { label: 'Return tickets to owners', value: 'return', color: '#10b981' },
+                { label: 'Permanently delete tickets', value: 'delete', color: '#ef4444' },
+            ]
+        );
+        if (choice === null) return;
+        forceCancelWithChoice(choice === 'delete');
+    }
+
+    async function forceCancelWithChoice(deleteTickets) {
+        try {
+            const data = await api.post('/shared/draw-settings/force-cancel', { deleteTickets });
+            showToast(data.message, 'success');
+            document.getElementById('targetDatetime').value = '';
+            document.getElementById('winnerCount').value = '1';
+            loadSettings();
+            loadOpenDraws();
+            loadAllDraws();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadPendingPredetermined() {
+        const list = document.getElementById('pendingPredeterminedList');
+        try {
+            const { pending } = await api.get('/superadmin/draws/pending-predetermined');
+            list.innerHTML = pending.length ? pending.map(d => `
+                <div style="background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:12px; margin-bottom:10px;">
+                    <div style="font-size:13px; color:#fff;"><strong>${escapeHtml(d.name)}</strong></div>
+                    <div style="font-size:12px; color:#94a3b8; margin:4px 0;">Ticket: <span style="font-family:monospace; color:#3b82f6;">${escapeHtml(d.predetermined_winner)}</span> — set by ${escapeHtml(d.set_by_name)}</div>
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <button class="btn" style="background:#10b981; padding:8px;" onclick="reviewPredetermined(${d.id}, 'approve')">Approve</button>
+                        <button class="btn" style="background:#ef4444; padding:8px;" onclick="reviewPredetermined(${d.id}, 'reject')">Reject</button>
+                    </div>
+                </div>
+            `).join('') : `<div style="font-style:italic;">Nothing waiting for approval.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function reviewPredetermined(drawId, action) {
+        try {
+            await api.post(`/superadmin/draws/${drawId}/${action}-predetermined`, {});
+            showToast(action === 'approve' ? 'Predetermined winner approved.' : 'Predetermined winner rejected.', 'success');
+            loadPendingPredetermined();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadOpenDraws() {
+        try {
+            const { draws } = await api.get('/admin/draws');
+            openDraws = draws.filter(d => d.status === 'open');
+            poolDraw = openDraws.find(d => d.is_pool_draw) || null;
+            const select = document.getElementById('drawSelect');
+            select.innerHTML = '<option value="">-- Select a draw --</option>' +
+                openDraws.map(d => `<option value="${d.id}">${escapeHtml(d.name)} (${new Date(d.draw_date).toLocaleDateString()})</option>`).join('');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    function onDrawSelected() {
+        const id = document.getElementById('drawSelect').value;
+        document.getElementById('winnerFormArea').style.display = id ? 'block' : 'none';
+    }
+
+    async function closeDrawWithWinners() {
+        const drawId = document.getElementById('drawSelect').value;
+        const winner1st = document.getElementById('winner1st').value.trim();
+        const winner2nd = document.getElementById('winner2nd').value.trim();
+        const winner3rd = document.getElementById('winner3rd').value.trim();
+        const additional = document.getElementById('winnerAdditional').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+        if (!drawId) return showToast('Please select a draw first.', 'error');
+        if (!winner1st) return showToast('1st place ticket number is required.', 'error');
+
+        if (!(await appConfirm('Close this draw and announce winners? This cannot be undone.', 'Close Draw'))) return;
+
+        try {
+            await api.patch(`/admin/draws/${drawId}`, {
+                status: 'completed',
+                winningNumber: winner1st,
+                winningNumber2nd: winner2nd || null,
+                winningNumber3rd: winner3rd || null,
+                additionalWinners: additional,
+            });
+            showToast('Draw closed and winners announced!', 'success');
+            document.getElementById('winnerFormArea').style.display = 'none';
+            document.getElementById('drawSelect').value = '';
+            loadOpenDraws();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadAllDraws() {
+        const list = document.getElementById('allDrawsList');
+        try {
+            const { draws } = await api.get('/superadmin/draws');
+            list.innerHTML = draws.length ? draws.map(d => `
+                <div style="background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <div>
+                        <div style="font-size:13px; font-weight:700;">${escapeHtml(d.name)} ${d.is_pool_draw ? '<span style="font-size:9px; background:rgba(59,130,246,0.15); color:#3b82f6; padding:2px 6px; border-radius:5px; margin-left:6px;">POOL DRAW</span>' : ''}</div>
+                        <div style="font-size:11px; color:#64748b;">₱${parseFloat(d.ticket_price).toFixed(2)} — ${d.status.toUpperCase()} — ${new Date(d.draw_date).toLocaleDateString()}</div>
+                    </div>
+                    <button class="btn" style="background:#ef4444; width:auto; padding:8px 14px;" onclick="deleteDraw(${d.id})"><i class="fa-solid fa-trash"></i> Delete</button>
+                </div>
+            `).join('') : `<div style="color:#64748b; font-size:13px; font-style:italic;">No draws in the system.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function deleteDraw(id) {
+        if (!(await appConfirm('Permanently delete this draw from the system? This cannot be undone.', 'Delete'))) return;
+        try {
+            await api.del(`/superadmin/draws/${id}`);
+            showToast('Draw deleted.', 'success');
+            loadAllDraws();
+            loadOpenDraws();
+        } catch (e) {
+            if (e.data && e.data.canForce) {
+                const choice = await appChoice(
+                    `${e.message}\n\nForce delete anyway? Choose what happens to any dropped tickets.`,
+                    [
+                        { label: 'Return tickets to owners', value: 'return', color: '#10b981' },
+                        { label: 'Permanently delete tickets', value: 'delete', color: '#ef4444' },
+                    ]
+                );
+                if (choice !== null) {
+                    try {
+                        await api.del(`/superadmin/draws/${id}?force=true${choice === 'delete' ? '&deleteTickets=true' : ''}`);
+                        showToast(choice === 'delete' ? 'Draw force-deleted. Tickets permanently removed.' : 'Draw force-deleted. Tickets returned to owners.', 'success');
+                        loadAllDraws();
+                        loadOpenDraws();
+                    } catch (e2) { showToast(e2.message, 'error'); }
+                }
+            } else {
+                showToast(e.message, 'error');
+            }
+        }
+    }
+
+    async function loadRelatedDots() {
+        try {
+            const counts = await api.get('/shared/notification-counts');
+            addNotificationDot('ticket_management.html', counts.tickets);
+            addNotificationDot('winner-approval.html', counts.winners);
+        } catch (e) { /* non-fatal */ }
+    }
+    document.addEventListener('auth-ready', () => { loadSettings(); loadOpenDraws(); loadPendingPredetermined(); loadAllDraws(); loadRelatedDots(); });
+</script>
+</body>
+</html>

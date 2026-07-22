@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Control Panel | Super Admin Multi-Sig Verification</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #060814; --bg-card: #0e1326; --accent-blue: #3b82f6;
+            --accent-green: #10b981; --accent-orange: #f59e0b; --accent-red: #ef4444;
+            --accent-purple: #8b5cf6; --text-main: #ffffff; --text-muted: #64748b; --border-color: #1e2942;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 70px 20px 40px; }
+        
+        .header-container { max-width: 1300px; margin: 0 auto 35px auto; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
+        .portal-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 5px 14px; border-radius: 8px; background: rgba(139, 92, 246, 0.1); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.2); }
+        .portal-title { font-size: 26px; font-weight: 700; margin-top: 5px; letter-spacing: -0.5px; }
+
+        .dashboard-grid { max-width: 1300px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+        
+        .section-panel { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        
+        .bypass-panel { border: 1px dashed var(--accent-orange); background: rgba(245, 158, 11, 0.02); }
+
+        .empty-state { color: var(--text-muted); font-size: 14px; font-style: italic; text-align: center; padding: 30px 0; }
+
+        .table-responsive { width: 100%; overflow-x: auto; max-height:520px; overflow-y:auto; }
+        .table-responsive thead { position: sticky; top: 0; z-index: 2; background: #0f172a; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        .data-table th { color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; padding: 14px 16px; border-bottom: 2px solid var(--border-color); }
+        .data-table td { padding: 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        
+        .user-info { font-weight: 600; color: #fff; }
+        .user-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        
+        .amount-display { font-family: monospace; font-size: 15px; font-weight: 700; }
+        .amount-deposit { color: var(--accent-green); }
+        .amount-withdraw { color: var(--accent-red); }
+
+        .badge { font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 5px 12px; border-radius: 6px; display: inline-block; }
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge-admin-ok { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.2); }
+
+        .document-thumbnail { width: 55px; height: 55px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.2s; }
+        .document-thumbnail:hover { transform: scale(1.05); }
+
+        .btn-action-container { display: flex; gap: 8px; }
+        .btn-act { border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 5px; color: #fff; }
+        .btn-approve { background: var(--accent-green); }
+        .btn-reject { background: var(--accent-red); }
+        .btn-bypass { background: var(--accent-purple); }
+        .btn-act:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+<a href="fundmanagement.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Fund Management">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+
+    <div class="header-container">
+        <div>
+            <span class="portal-badge">Root Administration</span>
+            <h1 class="portal-title">Super Admin Master Settlement Portal</h1>
+        </div>
+        <div style="text-align: right; font-size: 12px; color: var(--text-muted);">
+            System Access Tier: <span style="color: var(--accent-purple); font-weight:700;">SUPER ADMIN (ROOT)</span>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        
+        <!-- MAIN SECTION: LEVEL 2 MULTI-SIG APPROVAL -->
+        <div class="section-panel">
+            <h2 class="section-title"><i class="fa-solid fa-shield-check" style="color:var(--accent-green);"></i> Verified Admin Pipeline (Level 2 Final Release)</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Transaction ID</th>
+                            <th>User Target Details</th>
+                            <th>Gateway</th>
+                            <th>Value Metrics</th>
+                            <th>Proof File</th>
+                            <th>Audit Progress</th>
+                            <th>Master Action Controls</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterTableBody">
+                        <!-- Dynamic Injection -->
+                    </tbody>
+                </table>
+                <div id="masterEmpty" class="empty-state">No transactions are waiting for Level 2 confirmation.</div>
+            </div>
+        </div>
+
+        <!-- BOTTOM SECTION: EMERGENCY DIRECT BYPASS -->
+        <div class="section-panel bypass-panel">
+            <h2 class="section-title" style="color: var(--accent-orange); border-bottom-color: rgba(245, 158, 11, 0.2);">
+                <i class="fa-solid fa-triangle-exclamation"></i> Emergency Administrative Bypass Corridor
+            </h2>
+            <p style="font-size:13px; color:#94a3b8; margin-bottom:20px; margin-top:-10px;">
+                The items below are currently sitting inside the Level 1 queue. Use these overrides if the assigned Admin is offline or unavailable.
+            </p>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Transaction ID</th>
+                            <th>User Target Details</th>
+                            <th>Gateway</th>
+                            <th>Value Metrics</th>
+                            <th>Proof File</th>
+                            <th>Current Queue Status</th>
+                            <th>Direct Control Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bypassTableBody">
+                        <!-- Dynamic Injection -->
+                    </tbody>
+                </table>
+                <div id="bypassEmpty" class="empty-state">Clear pipeline. No stale requests found.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+        async function runSuperAdminEngine() {
+            try {
+                const { readyForFinalRelease, stuckAtLevel1 } = await api.get('/superadmin/transactions/queue');
+                renderStandardQueue(readyForFinalRelease);
+                renderBypassQueue(stuckAtLevel1);
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        function renderStandardQueue(items) {
+            const tbody = document.getElementById('masterTableBody');
+            const emptyState = document.getElementById('masterEmpty');
+
+            if (items.length === 0) {
+                tbody.innerHTML = "";
+                emptyState.style.display = "block";
+                return;
+            }
+            emptyState.style.display = "none";
+
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>
+                        <span class="badge" style="background:${item.txType === 'deposit' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'}; color:${item.txType === 'deposit' ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                            ${item.txType === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                        </span>
+                    </td>
+                    <td style="font-family:monospace; font-weight:600; color:#8b5cf6;">${item.display_id || item.id.slice(0, 8)}</td>
+                    <td>
+                        <div class="user-info">${escapeHtml(item.user ? item.user.full_name : 'Unknown')}</div>
+                        <div class="user-meta">${item.txType === 'deposit' ? `<i class="fa-solid fa-phone"></i> ${escapeHtml(item.user ? item.user.mobile || '' : '')}` : `<i class="fa-solid fa-wallet"></i> Acc: ${escapeHtml(item.account_number || '')}`}</div>
+                    </td>
+                    <td><span style="font-weight:500;">${escapeHtml(item.gateway)}</span></td>
+                    <td><span class="amount-display ${item.txType === 'deposit' ? 'amount-deposit' : 'amount-withdraw'}">₱${parseFloat(item.amount).toFixed(2)}</span></td>
+                    <td>
+                        ${item.proof_image ? `<img src="${item.proof_image}" class="document-thumbnail" onclick="window.open(this.src)" title="Review Payment Documentation">` : '<span style="font-size:12px; color:var(--text-muted); font-style:italic;">None</span>'}
+                    </td>
+                    <td><span class="badge badge-admin-ok"><i class="fa-solid fa-user-check"></i> Admin Passed</span></td>
+                    <td>
+                        ${item.txType === 'withdrawal' ? (item.otp_verified
+                            ? '<span style="font-size:11px; color:#10b981;"><i class="fa-solid fa-circle-check"></i> OTP Verified</span><br>'
+                            : '<span style="font-size:11px; color:#f59e0b;"><i class="fa-solid fa-triangle-exclamation"></i> Needs OTP</span><br>') : ''}
+                        <div class="btn-action-container">
+                            <button class="btn-act btn-approve" ${item.txType === 'withdrawal' && !item.otp_verified ? 'disabled style="opacity:.4; cursor:not-allowed;"' : ''} onclick="finalizeTransaction('${item.id}', '${item.txType}', 'approved')"><i class="fa-solid fa-check-double"></i> Grant Release</button>
+                            <button class="btn-act btn-reject" onclick="finalizeTransaction('${item.id}', '${item.txType}', 'rejected')"><i class="fa-solid fa-ban"></i> Terminate</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderBypassQueue(items) {
+            const tbody = document.getElementById('bypassTableBody');
+            const emptyState = document.getElementById('bypassEmpty');
+
+            if (items.length === 0) {
+                tbody.innerHTML = "";
+                emptyState.style.display = "block";
+                return;
+            }
+            emptyState.style.display = "none";
+
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>
+                        <span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid var(--border-color);">
+                            ${item.txType === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                        </span>
+                    </td>
+                    <td style="font-family:monospace; color:#94a3b8;">${item.display_id || item.id.slice(0, 8)}</td>
+                    <td>
+                        <div class="user-info" style="color:#cbd5e1;">${escapeHtml(item.user ? item.user.full_name : 'Unknown')}</div>
+                        <div class="user-meta">${item.txType === 'deposit' ? escapeHtml(item.user ? item.user.mobile || '' : '') : `Acc: ${escapeHtml(item.account_number || '')}`}</div>
+                    </td>
+                    <td><span style="color:#94a3b8;">${escapeHtml(item.gateway)}</span></td>
+                    <td><span class="amount-display" style="color:#fff;">₱${parseFloat(item.amount).toFixed(2)}</span></td>
+                    <td>
+                        ${item.proof_image ? `<img src="${item.proof_image}" class="document-thumbnail" style="opacity:0.6;" onclick="window.open(this.src)">` : '<span style="font-size:11px; color:var(--text-muted);">None</span>'}
+                    </td>
+                    <td><span class="badge badge-pending">Stuck at Lvl 1</span></td>
+                    <td>
+                        <div class="btn-action-container">
+                            <button class="btn-act btn-bypass" onclick="finalizeTransaction('${item.id}', '${item.txType}', 'approved')">
+                                <i class="fa-solid fa-bolt"></i> Force Approve
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function finalizeTransaction(id, type, decision) {
+            try {
+                await api.post(`/superadmin/transactions/${type}/${id}/finalize`, { decision });
+                showToast(decision === 'approved' ? 'Funds released.' : 'Transaction rejected.', 'success');
+                runSuperAdminEngine();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
+        document.addEventListener('auth-ready', () => {
+            runSuperAdminEngine();
+            setInterval(runSuperAdminEngine, 15000); // light polling so the queue stays fresh across devices
+        });
+    </script>
+</body>
+</html>

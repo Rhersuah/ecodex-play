@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Audio Management</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:70px 20px 40px;}
+  .wrap{max-width:720px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:20px;margin-bottom:20px;}
+  .card h2{font-size:14px;font-weight:700;margin-bottom:14px;}
+  input[type="text"], input[type="file"], select{width:100%;background:#0b0f17;border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;margin-bottom:14px;}
+  label{font-size:12px;font-weight:600;color:#cbd5e1;display:block;margin-bottom:6px;}
+  .btn{padding:11px 18px;border:none;border-radius:10px;background:var(--accent-green);color:#fff;font-weight:700;font-size:13px;cursor:pointer;}
+  .audio-row{display:flex; align-items:center; gap:12px; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:12px; margin-bottom:10px;}
+  .audio-row .name{flex:1; font-size:13px; font-weight:600;}
+  .audio-row audio{height:32px; max-width:160px;}
+  .del-btn{background:rgba(239,68,68,0.15); color:#ef4444; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12px;}
+  .deploy-row{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .deploy-row label{margin-bottom:0; flex-shrink:0; width:110px;}
+  #maxHeightList{max-height:400px; overflow-y:auto;}
+</style>
+</head>
+<body>
+<a href="super_admin.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Dashboard">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "super_admin";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>Audio Management</h1>
+    <p class="sub">Upload background sounds, then deploy one to each page. It only plays as ambient background music — never as a click sound effect — and only while that page is "online" (e.g. Live Draw only plays while a draw is active).</p>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-upload"></i> Upload New Sound</h2>
+        <label>Sound Name</label>
+        <input type="text" id="audioName" placeholder="e.g. Casino Ambience">
+        <label>Audio File (MP3, WAV, or OGG — max 15MB)</label>
+        <input type="file" id="audioFile" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg">
+        <button class="btn" id="uploadBtn" onclick="uploadAudio()"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-sliders"></i> Deploy to Pages</h2>
+        <div class="deploy-row">
+            <label>Live Draw</label>
+            <select id="deployLiveDraw" onchange="deployAudio('live_draw', this.value)"></select>
+        </div>
+        <div class="deploy-row">
+            <label>Shop</label>
+            <select id="deployShop" onchange="deployAudio('shop', this.value)"></select>
+        </div>
+        <div class="deploy-row">
+            <label>Auction</label>
+            <select id="deployAuction" onchange="deployAudio('auction', this.value)"></select>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-music"></i> Uploaded Sounds</h2>
+        <div id="maxHeightList"><div id="audioList"></div></div>
+    </div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+    let audioFilesCache = [];
+
+    async function loadAudio() {
+        try {
+            const { files } = await api.get('/admin/audio');
+            audioFilesCache = files;
+            document.getElementById('audioList').innerHTML = files.length ? files.map(f => `
+                <div class="audio-row">
+                    <div class="name">${escapeHtml(f.name)}</div>
+                    <audio controls src="${f.file_url}"></audio>
+                    <button class="del-btn" onclick="deleteAudio(${f.id})"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('') : `<div style="color:#64748b; font-size:13px; font-style:italic;">No sounds uploaded yet.</div>`;
+
+            populateSelect('deployLiveDraw', files);
+            populateSelect('deployShop', files);
+            populateSelect('deployAuction', files);
+            loadDeployments();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    function populateSelect(id, files) {
+        const select = document.getElementById(id);
+        select.innerHTML = '<option value="">-- None (silent) --</option>' +
+            files.map(f => `<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('');
+    }
+
+    async function loadDeployments() {
+        try {
+            const { deployments } = await api.get('/shared/audio-deployments');
+            document.getElementById('deployLiveDraw').value = deployments.live_draw ? deployments.live_draw.id : '';
+            document.getElementById('deployShop').value = deployments.shop ? deployments.shop.id : '';
+            document.getElementById('deployAuction').value = deployments.auction ? deployments.auction.id : '';
+        } catch (e) { /* non-fatal */ }
+    }
+
+    async function uploadAudio() {
+        const name = document.getElementById('audioName').value.trim();
+        const fileInput = document.getElementById('audioFile');
+        if (!name) return showToast('Please give the sound a name.', 'error');
+        if (!fileInput.files[0]) return showToast('Please choose an audio file.', 'error');
+
+        setBtnLoading('uploadBtn', true);
+        try {
+            const form = new FormData();
+            form.append('name', name);
+            form.append('audio', fileInput.files[0]);
+            await api.post('/admin/audio', form, true);
+            showToast('Sound uploaded!', 'success');
+            document.getElementById('audioName').value = '';
+            fileInput.value = '';
+            loadAudio();
+        } catch (e) {
+            showToast(e.message, 'error');
+        } finally {
+            setBtnLoading('uploadBtn', false, '<i class="fa-solid fa-cloud-arrow-up"></i> Upload');
+        }
+    }
+
+    async function deployAudio(pageKey, audioFileId) {
+        try {
+            await api.post(`/admin/audio-deployments/${pageKey}`, { audioFileId: audioFileId || null });
+            showToast('Deployment updated.', 'success');
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function deleteAudio(id) {
+        if (!(await appConfirm('Delete this sound? It will be removed from any page it is deployed to.', 'Delete'))) return;
+        try {
+            await api.del(`/admin/audio/${id}`);
+            showToast('Sound deleted.', 'success');
+            loadAudio();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', loadAudio);
+</script>
+</body>
+</html>

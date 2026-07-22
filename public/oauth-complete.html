@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Signing you in...</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<style>
+  body{background:#0b0f17;color:#fff;font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+  .spinner{width:36px;height:36px;border:3px solid #1e293b;border-top-color:#10b981;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  p{color:#94a3b8;font-size:13px;text-align:center;}
+</style>
+</head>
+<body>
+  <div style="text-align:center;">
+    <div class="spinner"></div>
+    <p>Signing you in...</p>
+  </div>
+
+<script>
+  // The token travels here in the URL FRAGMENT (after #), which browsers
+  // never transmit to any server — it only exists in this page's JS.
+  // We move it into this tab's sessionStorage, then redirect to the
+  // correct dashboard, immediately clearing it from the visible URL.
+  (function () {
+    const hash = window.location.hash.slice(1); // remove leading '#'
+    const params = new URLSearchParams(hash);
+    const token = params.get('token');
+    const role = params.get('role');
+
+    if (!token) {
+      window.location.href = '/signin-signup.html?oauthError=' + encodeURIComponent('Login failed. Please try again.');
+      return;
+    }
+
+    sessionStorage.setItem('ecodex_token', token);
+
+    const home = {
+      super_admin: '/super-admin/super_admin.html',
+      admin: '/admin/admin.html',
+      user: '/user/user.html',
+    };
+    window.location.replace(home[role] || '/user/user.html');
+  })();
+</script>
+</body>
+</html>

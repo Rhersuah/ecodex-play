@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Events & Announcements</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:60px 20px 40px;}
+  .wrap{max-width:680px;margin:0 auto;}
+  h1{font-size:22px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:26px;}
+  .tabs{display:flex;gap:10px;margin-bottom:20px;}
+  .tab-btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border-color);background:var(--bg-card);color:#94a3b8;font-weight:600;font-size:13px;cursor:pointer;}
+  .tab-btn.active{background:rgba(16,185,129,0.1);border-color:var(--accent-green);color:var(--accent-green);}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:22px;margin-bottom:24px;}
+  label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:6px;}
+  input,textarea{width:100%;background:#0b0f17;border:1px solid var(--border-color);border-radius:10px;padding:12px;color:#fff;font-size:14px;margin-bottom:16px;}
+  textarea{resize:vertical;min-height:80px;}
+  .btn{width:100%;padding:13px;border:none;border-radius:10px;background:var(--accent-green);color:#fff;font-weight:700;font-size:13px;cursor:pointer;}
+  .list-item{background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:16px 18px;margin-bottom:12px;}
+  .list-item h3{font-size:14px;margin-bottom:4px;}
+  .list-item p{font-size:12px;color:#cbd5e1;line-height:1.5;}
+  .list-item .meta{font-size:11px;color:var(--text-muted);margin-top:8px;}
+  .btn-del{background:#ef4444;border:none;color:#fff;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;margin-top:8px;}
+  .empty{color:var(--text-muted);font-size:13px;font-style:italic;padding:24px;text-align:center;background:var(--bg-card);border:1px dashed var(--border-color);border-radius:16px;}
+</style>
+</head>
+<body>
+<a href="javascript:history.back()" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = ["admin", "super_admin"];</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+
+<div class="wrap">
+    <h1>Events & Announcements</h1>
+    <p class="sub">Post updates that appear in the Bulletin section of every user's dashboard.</p>
+
+    <div class="tabs">
+        <button class="tab-btn active" id="tabEvent" onclick="switchTab('event')">Event</button>
+        <button class="tab-btn" id="tabAnnouncement" onclick="switchTab('announcement')">Announcement</button>
+    </div>
+
+    <div class="card">
+        <form id="postForm" onsubmit="submitPost(event)">
+            <label>Title</label>
+            <input type="text" id="postTitle" placeholder="e.g. Anniversary Grand Raffle" required>
+
+            <label>Description</label>
+            <textarea id="postBody" placeholder="Write the details users should know..." required></textarea>
+
+            <label>Photo or Video (optional)</label>
+            <input type="file" id="postMedia" accept="image/*,video/*">
+            <small style="color:#64748b; font-size:11px; display:block; margin-bottom:16px;">Great for showing outside activities, charity events, or community programs to users.</small>
+
+            <div id="eventDateGroup">
+                <label>Event Date & Time</label>
+                <input type="datetime-local" id="postDate">
+            </div>
+
+            <button type="submit" class="btn"><i class="fa-solid fa-bullhorn"></i> Publish</button>
+        </form>
+    </div>
+
+    <h2 style="font-size:15px; margin-bottom:14px;">Published Posts</h2>
+    <div id="postsList" style="max-height:600px; overflow-y:auto;"><div class="empty">Loading...</div></div>
+
+    <h2 style="font-size:15px; margin:30px 0 14px;"><i class="fa-solid fa-gem" style="color:#a855f7;"></i> Item Collection Event</h2>
+    <p style="font-size:12px; color:#64748b; margin-bottom:14px;">While an event is active, every user can collect a random amount of items (1-20, with 20 being very rare) once per day from their dashboard. Resets every day at 8:00 AM.</p>
+    <div class="list-item" style="margin-bottom:14px;">
+        <label style="font-size:12px; font-weight:600; color:#cbd5e1; display:block; margin-bottom:6px;">Event Name</label>
+        <input type="text" id="shardEventName" placeholder="e.g. Summer Shard Rush" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; color:#fff; font-size:13px; margin-bottom:10px;">
+        <label style="font-size:12px; font-weight:600; color:#cbd5e1; display:block; margin-bottom:6px;">Description (optional)</label>
+        <textarea id="shardEventDesc" rows="2" placeholder="Shown to users when they open the collection popup" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; color:#fff; font-size:13px; margin-bottom:10px;"></textarea>
+
+        <label style="font-size:12px; font-weight:600; color:#cbd5e1; display:block; margin-bottom:8px;">Icon</label>
+        <div id="iconPicker" style="display:flex; gap:10px; margin-bottom:14px;"></div>
+
+        <label style="font-size:12px; font-weight:600; color:#cbd5e1; display:block; margin-bottom:6px;">Runs For (days)</label>
+        <input type="number" id="shardEventDuration" placeholder="e.g. 30" min="1" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; color:#fff; font-size:13px; margin-bottom:10px;">
+
+        <label style="font-size:12px; font-weight:600; color:#cbd5e1; display:block; margin-bottom:6px;">Photo (optional — if there's a real-world item to collect)</label>
+        <input type="file" id="shardEventPhoto" accept="image/png,image/jpeg,image/webp" style="width:100%; background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:10px 12px; color:#fff; font-size:13px; margin-bottom:10px;">
+        <button class="btn" onclick="createShardEvent()"><i class="fa-solid fa-play"></i> Start New Event</button>
+    </div>
+    <div id="shardEventsList"></div>
+
+<script>
+    let currentTab = 'event';
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('tabEvent').classList.toggle('active', tab === 'event');
+        document.getElementById('tabAnnouncement').classList.toggle('active', tab === 'announcement');
+        document.getElementById('eventDateGroup').style.display = tab === 'event' ? 'block' : 'none';
+        document.getElementById('postDate').required = tab === 'event';
+    }
+
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    async function submitPost(e) {
+        e.preventDefault();
+        const title = document.getElementById('postTitle').value.trim();
+        const body = document.getElementById('postBody').value.trim();
+        const eventDate = document.getElementById('postDate').value;
+        const mediaFile = document.getElementById('postMedia').files[0];
+
+        if (currentTab === 'event' && !eventDate) {
+            return showToast('Please set an event date and time.', 'error');
+        }
+
+        const form = new FormData();
+        form.append('title', title);
+        form.append('body', body);
+        if (currentTab === 'event') form.append('eventDate', eventDate);
+        if (mediaFile) form.append('media', mediaFile);
+
+        try {
+            await api.post('/shared/announcements', form, true);
+            document.getElementById('postForm').reset();
+            showToast('Published successfully!', 'success');
+            loadPosts();
+        } catch (e2) { showToast(e2.message, 'error'); }
+    }
+
+    async function deletePost(id) {
+        try {
+            await api.del(`/shared/announcements/${id}`);
+            showToast('Deleted.', 'success');
+            loadPosts();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function loadPosts() {
+        const list = document.getElementById('postsList');
+        try {
+            const { announcements } = await api.get('/shared/announcements');
+            list.innerHTML = announcements.length ? announcements.map(a => `
+                <div class="list-item">
+                    <span style="font-size:10px; font-weight:700; text-transform:uppercase; color:${a.event_date ? '#f59e0b' : '#3b82f6'};">${a.event_date ? 'EVENT' : 'ANNOUNCEMENT'}</span>
+                    <h3>${escapeHtml(a.title)}</h3>
+                    ${a.media_url ? (a.media_type === 'video'
+                        ? `<video src="${a.media_url}" controls style="width:100%; border-radius:10px; margin:8px 0;"></video>`
+                        : `<img src="${a.media_url}" style="width:100%; border-radius:10px; margin:8px 0;">`) : ''}
+                    <p>${escapeHtml(a.body)}</p>
+                    <div class="meta">${a.event_date ? new Date(a.event_date).toLocaleString() : new Date(a.created_at).toLocaleString()}</div>
+                    <button class="btn-del" onclick="deletePost(${a.id})"><i class="fa-solid fa-trash"></i> Delete</button>
+                </div>
+            `).join('') : `<div class="empty">No posts yet.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    let selectedIcons = new Set(['shard']);
+    function renderIconPicker() {
+        const picker = document.getElementById('iconPicker');
+        const icons = [
+            { type: 'shard', label: 'Shard' },
+            { type: 'chest', label: 'Chest' },
+            { type: 'coins', label: 'Coins' },
+            { type: 'diamond', label: 'Diamond' },
+        ];
+        const allSelected = icons.every(i => selectedIcons.has(i.type));
+        picker.innerHTML = `
+            <div onclick="toggleAllIcons()" style="cursor:pointer; text-align:center; padding:10px; border-radius:12px; border:2px solid ${allSelected ? '#a855f7' : 'transparent'}; background:#0b0f17; margin-bottom:10px;">
+                <i class="fa-solid fa-shuffle" style="font-size:20px; color:#a855f7;"></i>
+                <div style="font-size:10px; color:#94a3b8; margin-top:4px;">Select All (random per user)</div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                ${icons.map(i => `
+                    <div onclick="toggleIcon('${i.type}')" id="iconOpt-${i.type}" style="cursor:pointer; text-align:center; padding:10px; border-radius:12px; border:2px solid ${selectedIcons.has(i.type) ? '#a855f7' : 'transparent'}; background:#0b0f17;">
+                        <div style="width:36px; height:36px; margin:0 auto;">${itemIconSVG(i.type, 36)}</div>
+                        <div style="font-size:10px; color:#94a3b8; margin-top:4px;">${i.label}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    function toggleIcon(type) {
+        if (selectedIcons.has(type)) {
+            if (selectedIcons.size > 1) selectedIcons.delete(type); // must keep at least 1 selected
+        } else {
+            selectedIcons.add(type);
+        }
+        renderIconPicker();
+    }
+    function toggleAllIcons() {
+        const all = ['shard', 'chest', 'coins', 'diamond'];
+        const allSelected = all.every(t => selectedIcons.has(t));
+        selectedIcons = new Set(allSelected ? ['shard'] : all);
+        renderIconPicker();
+    }
+
+    async function loadShardEvents() {
+        const list = document.getElementById('shardEventsList');
+        try {
+            const { events } = await api.get('/admin/shard-events');
+            list.innerHTML = events.length ? events.map(e => {
+                const types = e.icon_type.split(',').map(t => t.trim());
+                return `
+                <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                        <div style="display:flex; gap:8px;">
+                            ${types.map(t => `<div style="width:30px; height:30px; flex-shrink:0;">${itemIconSVG(t, 30)}</div>`).join('')}
+                            <div>
+                                <h3>${escapeHtml(e.name)} ${e.is_active ? '<span style="font-size:10px; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:6px; margin-left:6px;">ACTIVE</span>' : '<span style="font-size:10px; background:#334155; color:#94a3b8; padding:2px 8px; border-radius:6px; margin-left:6px;">STOPPED</span>'}</h3>
+                                ${e.description ? `<p>${escapeHtml(e.description)}</p>` : ''}
+                                ${e.photo ? `<img src="${e.photo}" style="max-width:120px; border-radius:8px; margin-top:6px; display:block;">` : ''}
+                                <div class="meta">Created ${new Date(e.created_at).toLocaleString()}${e.end_date ? ' — Ends ' + new Date(e.end_date).toLocaleString() : ''}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+                            <button class="btn" style="background:${e.is_active ? '#ef4444' : '#10b981'}; padding:8px 12px; font-size:12px;" onclick="toggleShardEvent(${e.id}, ${e.is_active ? 'false' : 'true'})">${e.is_active ? 'Stop' : 'Resume'}</button>
+                            <button class="btn" style="background:#334155; padding:8px 12px; font-size:12px;" onclick="deleteShardEvent(${e.id})">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }).join('') : `<div class="empty">No item collection events yet.</div>`;
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function createShardEvent() {
+        const name = document.getElementById('shardEventName').value.trim();
+        const description = document.getElementById('shardEventDesc').value.trim();
+        const durationDays = document.getElementById('shardEventDuration').value;
+        const photoFile = document.getElementById('shardEventPhoto') ? document.getElementById('shardEventPhoto').files[0] : null;
+        if (!name) return showToast('Please enter an event name.', 'error');
+        try {
+            const form = new FormData();
+            form.append('name', name);
+            form.append('description', description);
+            form.append('iconTypes', JSON.stringify(Array.from(selectedIcons)));
+            form.append('durationDays', durationDays || '');
+            if (photoFile) form.append('photo', photoFile);
+            await api.post('/admin/shard-events', form, true);
+            document.getElementById('shardEventName').value = '';
+            document.getElementById('shardEventDesc').value = '';
+            document.getElementById('shardEventDuration').value = '';
+            showToast('Item collection event started! Users will see the collection popup now.', 'success');
+            loadShardEvents();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function toggleShardEvent(id, isActive) {
+        try {
+            await api.patch(`/admin/shard-events/${id}`, { isActive });
+            loadShardEvents();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function deleteShardEvent(id) {
+        if (!(await appConfirm('Delete this shard event? Its collection history will also be removed.', 'Delete'))) return;
+        try {
+            await api.del(`/admin/shard-events/${id}`);
+            loadShardEvents();
+        } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    document.addEventListener('auth-ready', () => { loadPosts(); loadShardEvents(); renderIconPicker(); });
+</script>
+</body>
+</html>

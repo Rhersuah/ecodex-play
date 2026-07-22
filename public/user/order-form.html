@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play | Complete Your Order</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{--bg-main:#0b0f17;--bg-card:#131926;--border-color:#1e293b;--text-muted:#94a3b8;--accent-green:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{background:var(--bg-main);color:#fff;min-height:100vh;padding:70px 20px 40px;}
+  .wrap{max-width:520px;margin:0 auto;}
+  h1{font-size:20px;font-weight:800;margin-bottom:6px;}
+  p.sub{color:var(--text-muted);font-size:13px;margin-bottom:24px;}
+  .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:20px;margin-bottom:16px;}
+  .card h2{font-size:13px;font-weight:700;margin-bottom:14px;color:#cbd5e1;text-transform:uppercase;letter-spacing:0.5px;}
+  label{font-size:12px;font-weight:600;color:#cbd5e1;display:block;margin-bottom:6px;}
+  input[type="text"],input[type="email"],input[type="tel"],textarea,input[type="file"]{width:100%;background:#0b0f17;border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;margin-bottom:14px;}
+  .note{font-size:11px;color:#f59e0b;margin-top:-10px;margin-bottom:14px;}
+  .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;color:var(--text-muted);}
+  .summary-row strong{color:#fff;}
+  .btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--accent-green);color:#fff;font-weight:700;font-size:14px;cursor:pointer;}
+  .id-preview{max-width:100%;border-radius:10px;margin-top:8px;display:none;}
+</style>
+</head>
+<body>
+<a href="shop.html" style="position:fixed; top:16px; left:16px; z-index:500; background:#131926; border:1px solid #1e293b; color:#94a3b8; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.4);" title="Back to Shop">
+  <i class="fa-solid fa-arrow-left"></i>
+</a>
+<script>window.REQUIRED_ROLE = "user";</script>
+<script src="/assets/js/api.js"></script>
+<script src="/assets/js/auth-guard.js"></script>
+<script src="/assets/js/security.js"></script>
+<script src="/assets/js/live-updates.js"></script>
+<script src="/assets/js/support-chatbot.js"></script>
+
+<div class="wrap">
+    <h1>Complete Your Order</h1>
+    <p class="sub">Fill this out so we know exactly who to ship to. Your order waits for a quick 2-step staff review before it ships.</p>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-box"></i> Order Summary</h2>
+        <div id="orderSummaryLines"></div>
+        <div class="summary-row" style="border-top:1px solid var(--border-color); margin-top:6px; padding-top:10px;"><span>Total</span><strong id="sumTotal" style="color:var(--accent-green);">—</strong></div>
+    </div>
+
+    <form id="orderForm">
+        <div class="card">
+            <h2><i class="fa-solid fa-user"></i> Recipient Details</h2>
+            <label>Full Name</label>
+            <input type="text" id="recipientName" required>
+            <p class="note"><i class="fa-solid fa-circle-exclamation"></i> Please use your real, legal name — this must match your registered ID.</p>
+
+            <label>Email Address</label>
+            <input type="email" id="recipientEmail" required>
+
+            <label>Phone Number</label>
+            <input type="tel" id="recipientPhone" required>
+
+            <label>Shipping Address</label>
+            <textarea id="shippingAddress" rows="3" placeholder="Complete address where we'll send your order" required></textarea>
+
+            <label>Your Registered ID</label>
+            <div style="background:#0b0f17; border:1px solid var(--border-color); border-radius:10px; padding:10px; margin-bottom:14px;">
+                <img id="idPreview" class="id-preview" style="display:block; max-width:100%; border-radius:6px;">
+                <p style="font-size:11px; color:#64748b; margin-top:6px;">This is the ID you uploaded during signup — used to verify this order matches your identity.</p>
+            </div>
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn"><i class="fa-solid fa-check"></i> Submit Order for Review</button>
+    </form>
+</div>
+
+<div id="receiptOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:3000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px; max-width:420px; width:100%; padding:26px; max-height:85vh; overflow-y:auto;">
+        <div style="text-align:center; margin-bottom:18px;">
+            <i class="fa-solid fa-circle-check" style="font-size:40px; color:var(--accent-green);"></i>
+            <h2 style="font-size:17px; margin-top:10px;">Order Submitted!</h2>
+            <p style="font-size:12px; color:var(--text-muted);">Digital Receipt — keep this for your records</p>
+        </div>
+        <div id="receiptBody" style="font-size:13px; line-height:1.8;"></div>
+        <button onclick="window.location.replace('my_orders.html')" style="width:100%; padding:13px; border:none; border-radius:12px; background:var(--accent-green); color:#fff; font-weight:700; font-size:14px; cursor:pointer; margin-top:16px;">View My Orders</button>
+    </div>
+</div>
+
+<script>
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+    function showDigitalReceipt(orders, recipient) {
+        const grandTotal = orders.reduce((sum, o) => sum + o.total, 0);
+        const receiptNo = 'RCPT-' + Date.now().toString().slice(-8);
+        document.getElementById('receiptBody').innerHTML = `
+            <div style="border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Receipt No.</span><strong>${receiptNo}</strong></div>
+                <div style="display:flex; justify-content:space-between;"><span style="color:var(--text-muted);">Date</span><strong>${new Date().toLocaleString()}</strong></div>
+            </div>
+            <div style="border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:10px;">
+                ${orders.map(o => `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>${escapeHtml(o.name)} x${o.qty}</span><span>${pesos(o.total)}</span></div>`).join('')}
+                <div style="display:flex; justify-content:space-between; font-weight:800; color:var(--accent-green); margin-top:6px;"><span>Total</span><span>${pesos(grandTotal)}</span></div>
+            </div>
+            <div>
+                <div style="color:var(--text-muted); font-size:11px; text-transform:uppercase; margin-bottom:4px;">Ship To</div>
+                <div><strong>${escapeHtml(recipient.recipientName)}</strong></div>
+                <div style="color:var(--text-muted);">${escapeHtml(recipient.recipientEmail)} — ${escapeHtml(recipient.recipientPhone)}</div>
+                <div style="color:var(--text-muted);">${escapeHtml(recipient.shippingAddress)}</div>
+            </div>
+            <p style="font-size:11px; color:#f59e0b; margin-top:14px;"><i class="fa-solid fa-hourglass-half"></i> Status: Waiting for Admin review, then Super Admin final approval.</p>
+        `;
+        document.getElementById('receiptOverlay').style.display = 'flex';
+    }
+
+    let orderContext = null;
+
+    let isNavigatingAway = false;
+
+    function loadOrderContext(detail) {
+        if (isNavigatingAway) return; // already leaving this page — don't re-run and cause a loop
+        const raw = sessionStorage.getItem('pendingOrder');
+        if (!raw) {
+            showToast('No order in progress — redirecting to Shop.', 'error');
+            isNavigatingAway = true;
+            // location.replace (not .href) so this page is removed from
+            // browser history — pressing Back from Shop won't bounce back
+            // into this now-empty order form.
+            setTimeout(() => window.location.replace('shop.html'), 1500);
+            return;
+        }
+        const parsed = JSON.parse(raw);
+        // Normalize to always work with an array of items, whether it came
+        // from "Buy Now" (one item) or "Complete Order" from the cart (many).
+        orderContext = Array.isArray(parsed) ? parsed : [parsed];
+
+        document.getElementById('orderSummaryLines').innerHTML = orderContext.map(i => `
+            <div class="summary-row"><span>${escapeHtml(i.name)} x${i.qty}</span><strong>${pesos(i.total)}</strong></div>
+        `).join('');
+        const grandTotal = orderContext.reduce((sum, i) => sum + i.total, 0);
+        document.getElementById('sumTotal').textContent = pesos(grandTotal);
+
+        // Pre-fill everything from the user's registered account details —
+        // this is what's on file, they can still edit name/email/phone/address
+        // but their ID photo is the one already on record from signup.
+        document.getElementById('recipientName').value = detail.full_name || '';
+        document.getElementById('recipientEmail').value = detail.email || '';
+        document.getElementById('recipientPhone').value = detail.mobile || '';
+        document.getElementById('shippingAddress').value = detail.address || '';
+        const idPreview = document.getElementById('idPreview');
+        if (detail.id_photo) {
+            idPreview.src = detail.id_photo;
+            idPreview.style.display = 'block';
+        } else {
+            idPreview.style.display = 'none';
+        }
+    }
+
+    let lastAuthDetail = null;
+    document.addEventListener('auth-ready', (e) => {
+        lastAuthDetail = e.detail;
+        loadOrderContext(e.detail);
+    });
+
+    // Fixes the "stuck in Complete Your Order after pressing Back twice"
+    // issue — some browsers restore this page from cache (bfcache) instead
+    // of reloading it, which can leave the form showing a stale/submitted
+    // state. Re-check the pending order whenever the page becomes visible
+    // again via back/forward navigation.
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted && lastAuthDetail) {
+            loadOrderContext(lastAuthDetail);
+        }
+    });
+
+    document.getElementById('orderForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setBtnLoading('submitBtn', true);
+        try {
+            const recipientName = document.getElementById('recipientName').value.trim();
+            const recipientEmail = document.getElementById('recipientEmail').value.trim();
+            const recipientPhone = document.getElementById('recipientPhone').value.trim();
+            const shippingAddress = document.getElementById('shippingAddress').value.trim();
+
+            const placedOrders = [];
+            // One order row per item, all sharing the same shipping details
+            // and using the ID already on file from registration.
+            for (const item of orderContext) {
+                const result = await api.post('/user/shop-orders', {
+                    itemId: item.itemId,
+                    quantity: item.qty,
+                    recipientName, recipientEmail, recipientPhone, shippingAddress,
+                });
+                placedOrders.push({ ...item, orderId: result.id });
+            }
+
+            sessionStorage.removeItem('pendingOrder');
+            isNavigatingAway = true;
+            showDigitalReceipt(placedOrders, { recipientName, recipientEmail, recipientPhone, shippingAddress });
+        } catch (e) {
+            showToast(e.message, 'error');
+        } finally {
+            setBtnLoading('submitBtn', false, '<i class="fa-solid fa-check"></i> Submit Order for Review');
+        }
+    });
+</script>
+</body>
+</html>

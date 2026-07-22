@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/assets/css/global.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E - Codex Play</title>
+<link rel="icon" type="image/png" href="/assets/images/favicon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{
+    --bg-main:#0b0f17; --bg-card:#131926; --border-color:#1e293b; --text-muted:#94a3b8;
+    --c-maintenance:#f59e0b; --c-updating:#3b82f6; --c-shutdown:#ef4444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{
+    background:var(--bg-main); color:#fff; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .card{
+    max-width:440px; width:100%; text-align:center; background:var(--bg-card);
+    border:1px solid var(--border-color); border-radius:24px; padding:44px 30px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  }
+  .icon-stage{ position:relative; width:120px; height:120px; margin:0 auto 28px auto; display:flex; align-items:center; justify-content:center; }
+  h1{ font-size:22px; font-weight:800; margin-bottom:10px; }
+  p{ color:var(--text-muted); font-size:14px; line-height:1.6; }
+  .custom-msg{ margin-top:16px; padding:12px 16px; background:rgba(255,255,255,0.03); border-radius:12px; font-size:13px; color:#cbd5e1; }
+  .badge{ display:inline-block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:5px 14px; border-radius:8px; margin-bottom:18px; }
+
+  /* ---------- MAINTENANCE: spinning gear ---------- */
+  .gear{ font-size:64px; color:var(--c-maintenance); animation: spin 3s linear infinite; }
+  @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+  .badge-maintenance{ background:rgba(245,158,11,0.15); color:var(--c-maintenance); }
+
+  /* ---------- UPDATING: pulsing download / progress bar ---------- */
+  .cloud-download{ font-size:60px; color:var(--c-updating); animation: bounce 1.4s ease-in-out infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+  .badge-updating{ background:rgba(59,130,246,0.15); color:var(--c-updating); }
+  .progress-track{ width:100%; height:8px; background:#0b0f17; border-radius:6px; overflow:hidden; margin-top:22px; border:1px solid var(--border-color); }
+  .progress-fill{ height:100%; width:40%; background:linear-gradient(90deg, var(--c-updating), #60a5fa); border-radius:6px; animation: loading 1.6s ease-in-out infinite; }
+  @keyframes loading { 0%{ margin-left:-40%; } 100%{ margin-left:100%; } }
+
+  /* ---------- SHUTDOWN: power icon fading ---------- */
+  .power-ring{ width:110px; height:110px; border-radius:50%; border:4px solid var(--c-shutdown); display:flex; align-items:center; justify-content:center; animation: pulse-ring 2s ease-in-out infinite; }
+  .power-icon{ font-size:44px; color:var(--c-shutdown); }
+  @keyframes pulse-ring { 0%,100%{ opacity:1; box-shadow:0 0 0 0 rgba(239,68,68,0.3);} 50%{ opacity:.6; box-shadow:0 0 0 14px rgba(239,68,68,0);} }
+  .badge-shutdown{ background:rgba(239,68,68,0.15); color:var(--c-shutdown); }
+
+  .retry-note{ margin-top:22px; font-size:12px; color:#64748b; }
+  .super-admin-link{ margin-top:22px; display:inline-block; font-size:12px; color:#64748b; text-decoration:underline; }
+</style>
+</head>
+<body>
+  <div class="card" id="statusCard">
+    <div class="icon-stage" id="iconStage"></div>
+    <span class="badge" id="statusBadge"></span>
+    <h1 id="statusTitle">Loading...</h1>
+    <p id="statusDesc"></p>
+    <div id="customMessageBox"></div>
+    <div id="progressBox"></div>
+    <p class="retry-note" id="retryNote"></p>
+    <a href="/signin-signup.html" class="super-admin-link">System Administrator? Sign in here</a>
+  </div>
+
+<script>
+  const STATES = {
+    maintenance: {
+      badgeClass: 'badge-maintenance', badgeText: 'Under Maintenance',
+      title: 'We are currently under maintenance',
+      desc: 'E-Codex Play is temporarily unavailable while we work on the system. Please check back later.',
+      icon: '<i class="fa-solid fa-gear gear"></i>',
+    },
+    updating: {
+      badgeClass: 'badge-updating', badgeText: 'Updating',
+      title: 'We are updating the app',
+      desc: 'We are rolling out new features/fixes right now. We will be back in a few minutes.',
+      icon: '<i class="fa-solid fa-cloud-arrow-down cloud-download"></i>',
+      showProgress: true,
+    },
+    shutdown: {
+      badgeClass: 'badge-shutdown', badgeText: 'Offline',
+      title: 'The system is temporarily offline',
+      desc: 'E-Codex Play is unavailable right now. Please contact us if you have any questions.',
+      icon: '<div class="power-ring"><i class="fa-solid fa-power-off power-icon"></i></div>',
+    },
+  };
+
+  function render(status, message) {
+    const s = STATES[status] || STATES.maintenance;
+    document.getElementById('iconStage').innerHTML = s.icon;
+    document.getElementById('statusBadge').className = 'badge ' + s.badgeClass;
+    document.getElementById('statusBadge').textContent = s.badgeText;
+    document.getElementById('statusTitle').textContent = s.title;
+    document.getElementById('statusDesc').textContent = s.desc;
+    document.getElementById('progressBox').innerHTML = s.showProgress
+      ? '<div class="progress-track"><div class="progress-fill"></div></div>' : '';
+    document.getElementById('customMessageBox').innerHTML = message
+      ? `<div class="custom-msg">${message.replace(/</g,'&lt;')}</div>` : '';
+  }
+
+  let lastKnownStatus = null;
+  async function checkStatus() {
+    try {
+      const res = await fetch('/api/system-status');
+      const data = await res.json();
+      lastKnownStatus = data.status;
+      if (data.status === 'online') {
+        document.getElementById('retryNote').textContent = 'Back online... redirecting you now.';
+        setTimeout(() => { window.location.href = '/signin-signup.html'; }, 1200);
+        return;
+      }
+      render(data.status, data.message);
+      document.getElementById('retryNote').textContent = '';
+    } catch (e) {
+      render('shutdown', null);
+    }
+  }
+
+  checkStatus();
+  setInterval(checkStatus, 10000);
+</script>
+</body>
+</html>
